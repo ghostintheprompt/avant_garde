@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>CFBundleName</key>
+    <string>Avant Garde</string>
+    <key>CFBundleIdentifier</key>
+    <string>com.avantgarde.authoring</string>
+    <key>CFBundleVersion</key>
+    <string>1.0.0</string>
+    <key>CFBundleShortVersionString</key>
+    <string>1.0</string>
+    <key>NSHighResolutionCapable</key>
+    <string>True</string>
+    <key>NSAppTransportSecurity</key>
+    <dict>
+        <key>NSAllowsArbitraryLoads</key>
+        <true/>
+    </dict>
+    <key>NSMicrophoneUsageDescription</key>
+    <string>Avant Garde uses audio for text-to-speech playback to help you review your writing.</string>
+    <key>NSSpeechRecognitionUsageDescription</key>
+    <string>Avant Garde uses speech synthesis to provide high-quality text-to-speech for manuscript review.</string>
+    <key>NSHumanReadableCopyright</key>
+    <string>© 2025 Avant Garde. Professional authoring tools for modern writers.</string>
+    <key>CFBundleGetInfoString</key>
+    <string>Avant Garde - Professional ebook authoring with color psychology and audio feedback</string>
+</dict>
+</plist>
