@@ -3,8 +3,9 @@ import Foundation
 
 @main
 class AvantGardeApp: NSApplication {
-    
+
     private var preferencesWindowController: PreferencesWindowController?
+    private var textToSpeech: TextToSpeech?
     
     override func finishLaunching() {
         super.finishLaunching()
@@ -271,43 +272,196 @@ class AvantGardeApp: NSApplication {
     }
     
     @objc private func newDocument() {
-        // TODO: Implement new document
-        print("New document requested")
+        let document = EbookDocument()
+        let windowController = EditorWindowController(document: document)
+        document.addWindowController(windowController)
+        windowController.showWindow(nil)
     }
-    
+
     @objc private func openDocument() {
-        // TODO: Implement open document
-        print("Open document requested")
+        let openPanel = NSOpenPanel()
+        openPanel.allowsMultipleSelection = false
+        openPanel.canChooseDirectories = false
+        openPanel.canCreateDirectories = false
+        openPanel.canChooseFiles = true
+        openPanel.allowedContentTypes = [.json, .data]
+        openPanel.message = "Choose an Avant Garde document to open"
+
+        openPanel.begin { response in
+            guard response == .OK, let url = openPanel.url else { return }
+
+            do {
+                let data = try Data(contentsOf: url)
+                let document = EbookDocument()
+                try document.read(from: data, ofType: "AvantGardeDocument")
+
+                let windowController = EditorWindowController(document: document)
+                document.addWindowController(windowController)
+                windowController.showWindow(nil)
+            } catch {
+                let alert = NSAlert()
+                alert.messageText = "Failed to Open Document"
+                alert.informativeText = "Could not open the selected document: \(error.localizedDescription)"
+                alert.alertStyle = .critical
+                alert.addButton(withTitle: "OK")
+                alert.runModal()
+            }
+        }
     }
-    
+
     @objc private func saveDocument() {
-        // TODO: Implement save document
-        print("Save document requested")
+        guard let mainWindow = NSApp.mainWindow,
+              let windowController = mainWindow.windowController as? EditorWindowController,
+              let document = windowController.document as? EbookDocument else {
+            showNoDocumentAlert()
+            return
+        }
+
+        if let fileURL = document.fileURL {
+            saveDocument(document, to: fileURL)
+        } else {
+            saveDocumentAs()
+        }
     }
-    
+
     @objc private func saveDocumentAs() {
-        // TODO: Implement save as
-        print("Save as requested")
+        guard let mainWindow = NSApp.mainWindow,
+              let windowController = mainWindow.windowController as? EditorWindowController,
+              let document = windowController.document as? EbookDocument else {
+            showNoDocumentAlert()
+            return
+        }
+
+        let savePanel = NSSavePanel()
+        savePanel.allowedContentTypes = [.json]
+        savePanel.nameFieldStringValue = document.metadata.title.isEmpty ? "Untitled.avantgarde" : "\(document.metadata.title).avantgarde"
+        savePanel.message = "Save your Avant Garde document"
+
+        savePanel.begin { response in
+            guard response == .OK, let url = savePanel.url else { return }
+            self.saveDocument(document, to: url)
+        }
+    }
+
+    private func saveDocument(_ document: EbookDocument, to url: URL) {
+        do {
+            let data = try document.data(ofType: "AvantGardeDocument")
+            try data.write(to: url)
+            document.fileURL = url
+
+            let alert = NSAlert()
+            alert.messageText = "Document Saved"
+            alert.informativeText = "Your document has been saved successfully."
+            alert.alertStyle = .informational
+            alert.addButton(withTitle: "OK")
+            alert.runModal()
+        } catch {
+            let alert = NSAlert()
+            alert.messageText = "Save Failed"
+            alert.informativeText = "Could not save the document: \(error.localizedDescription)"
+            alert.alertStyle = .critical
+            alert.addButton(withTitle: "OK")
+            alert.runModal()
+        }
+    }
+
+    private func showNoDocumentAlert() {
+        let alert = NSAlert()
+        alert.messageText = "No Document Open"
+        alert.informativeText = "Please create or open a document first."
+        alert.alertStyle = .informational
+        alert.addButton(withTitle: "OK")
+        alert.runModal()
     }
     
     @objc private func exportToKDP() {
-        // TODO: Implement KDP export
-        print("KDP export requested")
+        guard let mainWindow = NSApp.mainWindow,
+              let windowController = mainWindow.windowController as? EditorWindowController,
+              let document = windowController.document as? EbookDocument else {
+            showNoDocumentAlert()
+            return
+        }
+
+        let savePanel = NSSavePanel()
+        savePanel.allowedContentTypes = [.html]
+        savePanel.nameFieldStringValue = document.metadata.title.isEmpty ? "book.html" : "\(document.metadata.title).html"
+        savePanel.message = "Export to KDP HTML format"
+
+        savePanel.begin { response in
+            guard response == .OK, let url = savePanel.url else { return }
+
+            do {
+                let kdpData = try document.exportToKDP()
+                try kdpData.write(to: url)
+
+                let alert = NSAlert()
+                alert.messageText = "KDP Export Successful"
+                alert.informativeText = "Your book has been exported to KDP HTML format. You can now upload it to Amazon KDP."
+                alert.alertStyle = .informational
+                alert.addButton(withTitle: "OK")
+                alert.runModal()
+            } catch {
+                let alert = NSAlert()
+                alert.messageText = "Export Failed"
+                alert.informativeText = "Could not export to KDP format: \(error.localizedDescription)"
+                alert.alertStyle = .critical
+                alert.addButton(withTitle: "OK")
+                alert.runModal()
+            }
+        }
     }
-    
+
     @objc private func exportToGoogle() {
-        // TODO: Implement Google export
-        print("Google export requested")
+        guard let mainWindow = NSApp.mainWindow,
+              let windowController = mainWindow.windowController as? EditorWindowController,
+              let document = windowController.document as? EbookDocument else {
+            showNoDocumentAlert()
+            return
+        }
+
+        let savePanel = NSSavePanel()
+        savePanel.allowedContentTypes = [.epub]
+        savePanel.nameFieldStringValue = document.metadata.title.isEmpty ? "book.epub" : "\(document.metadata.title).epub"
+        savePanel.message = "Export to Google Play Books EPUB format"
+
+        savePanel.begin { response in
+            guard response == .OK, let url = savePanel.url else { return }
+
+            do {
+                let googleData = try document.exportToGoogle()
+                try googleData.write(to: url)
+
+                let alert = NSAlert()
+                alert.messageText = "Google Play Export Successful"
+                alert.informativeText = "Your book has been exported to EPUB format. You can now upload it to Google Play Books."
+                alert.alertStyle = .informational
+                alert.addButton(withTitle: "OK")
+                alert.runModal()
+            } catch {
+                let alert = NSAlert()
+                alert.messageText = "Export Failed"
+                alert.informativeText = "Could not export to Google Play format: \(error.localizedDescription)"
+                alert.alertStyle = .critical
+                alert.addButton(withTitle: "OK")
+                alert.runModal()
+            }
+        }
     }
     
     @objc private func toggleSidebar() {
-        // TODO: Implement sidebar toggle
-        print("Toggle sidebar requested")
+        guard let mainWindow = NSApp.mainWindow,
+              let windowController = mainWindow.windowController as? EditorWindowController else {
+            return
+        }
+        windowController.toggleSidebar(nil)
     }
-    
+
     @objc private func toggleStatistics() {
-        // TODO: Implement statistics toggle
-        print("Toggle statistics requested")
+        guard let mainWindow = NSApp.mainWindow,
+              let windowController = mainWindow.windowController as? EditorWindowController else {
+            return
+        }
+        windowController.toggleStatistics()
     }
     
     @objc private func selectTheme(_ sender: NSMenuItem) {
@@ -316,18 +470,45 @@ class AvantGardeApp: NSApplication {
     }
     
     @objc private func playCurrentChapter() {
-        // TODO: Implement audio playback
-        print("Play current chapter requested")
+        guard let mainWindow = NSApp.mainWindow,
+              let windowController = mainWindow.windowController as? EditorWindowController,
+              let document = windowController.document as? EbookDocument else {
+            showNoDocumentAlert()
+            return
+        }
+
+        if textToSpeech == nil {
+            textToSpeech = TextToSpeech()
+        }
+
+        // For now, speak the entire document
+        // TODO: Implement current chapter detection
+        if let firstChapter = document.chapters.first {
+            textToSpeech?.speakChapter(firstChapter)
+        }
     }
-    
+
     @objc private func pauseAudio() {
-        // TODO: Implement audio pause
-        print("Pause audio requested")
+        guard let tts = textToSpeech else {
+            let alert = NSAlert()
+            alert.messageText = "No Audio Playing"
+            alert.informativeText = "There is no audio currently playing."
+            alert.alertStyle = .informational
+            alert.addButton(withTitle: "OK")
+            alert.runModal()
+            return
+        }
+
+        if tts.isSpeaking {
+            tts.pauseSpeaking()
+        } else if tts.isPaused {
+            tts.continueSpeaking()
+        }
     }
-    
+
     @objc private func stopAudio() {
-        // TODO: Implement audio stop
-        print("Stop audio requested")
+        guard let tts = textToSpeech else { return }
+        tts.stopSpeaking()
     }
     
     @objc private func showVoiceSettings() {

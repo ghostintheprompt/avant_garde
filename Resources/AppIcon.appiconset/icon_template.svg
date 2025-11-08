@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#6366F1;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#8B5CF6;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#EC4899;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="bookGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#FFFFFF;stop-opacity:0.95" />
+      <stop offset="100%" style="stop-color:#F3F4F6;stop-opacity:0.9" />
+    </linearGradient>
+  </defs>
+
+  <!-- Background with rounded corners (macOS style) -->
+  <rect width="1024" height="1024" rx="225" fill="url(#bgGradient)"/>
+
+  <!-- Book/Document icon -->
+  <g transform="translate(312, 256)">
+    <!-- Book pages -->
+    <rect x="0" y="0" width="400" height="512" rx="20" fill="url(#bookGradient)" opacity="0.9"/>
+    <rect x="10" y="10" width="380" height="492" rx="15" fill="none" stroke="#6366F1" stroke-width="4"/>
+
+    <!-- Text lines representing content -->
+    <line x1="60" y1="100" x2="340" y2="100" stroke="#6366F1" stroke-width="8" opacity="0.3"/>
+    <line x1="60" y1="150" x2="340" y2="150" stroke="#8B5CF6" stroke-width="8" opacity="0.3"/>
+    <line x1="60" y1="200" x2="280" y2="200" stroke="#EC4899" stroke-width="8" opacity="0.3"/>
+
+    <line x1="60" y1="280" x2="340" y2="280" stroke="#6366F1" stroke-width="8" opacity="0.3"/>
+    <line x1="60" y1="330" x2="340" y2="330" stroke="#8B5CF6" stroke-width="8" opacity="0.3"/>
+    <line x1="60" y1="380" x2="300" y2="380" stroke="#EC4899" stroke-width="8" opacity="0.3"/>
+  </g>
+
+  <!-- Color palette circles in corner -->
+  <circle cx="820" cy="820" r="80" fill="#6366F1" opacity="0.8"/>
+  <circle cx="760" cy="880" r="60" fill="#EC4899" opacity="0.8"/>
+  <circle cx="880" cy="880" r="60" fill="#F59E0B" opacity="0.8"/>
+
+  <!-- Avant Garde "AG" monogram (centered) -->
+  <g transform="translate(412, 850)">
+    <text x="0" y="0" font-family="SF Pro Display, -apple-system, sans-serif" font-size="120" font-weight="700" fill="white" opacity="0.95">AG</text>
+  </g>
+</svg>
