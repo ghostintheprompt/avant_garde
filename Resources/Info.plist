@@ -4,18 +4,32 @@
 <dict>
     <key>CFBundleName</key>
     <string>Avant Garde</string>
+    <key>CFBundleDisplayName</key>
+    <string>Avant Garde</string>
     <key>CFBundleIdentifier</key>
     <string>com.avantgarde.authoring</string>
     <key>CFBundleVersion</key>
     <string>1.0.0</string>
     <key>CFBundleShortVersionString</key>
     <string>1.0</string>
+    <key>CFBundlePackageType</key>
+    <string>APPL</string>
+    <key>CFBundleExecutable</key>
+    <string>AvantGarde</string>
+    <key>CFBundleIconFile</key>
+    <string>AppIcon</string>
     <key>NSHighResolutionCapable</key>
-    <string>True</string>
+    <true/>
+    <key>NSPrincipalClass</key>
+    <string>AvantGardeApp</string>
+    <key>LSMinimumSystemVersion</key>
+    <string>12.0</string>
+    <key>LSApplicationCategoryType</key>
+    <string>public.app-category.productivity</string>
     <key>NSAppTransportSecurity</key>
     <dict>
         <key>NSAllowsArbitraryLoads</key>
-        <true/>
+        <false/>
     </dict>
     <key>NSMicrophoneUsageDescription</key>
     <string>Avant Garde uses audio for text-to-speech playback to help you review your writing.</string>
@@ -25,5 +39,58 @@
     <string>© 2025 Avant Garde. Professional authoring tools for modern writers.</string>
     <key>CFBundleGetInfoString</key>
     <string>Avant Garde - Professional ebook authoring with color psychology and audio feedback</string>
+    <key>CFBundleDocumentTypes</key>
+    <array>
+        <dict>
+            <key>CFBundleTypeName</key>
+            <string>Avant Garde Document</string>
+            <key>CFBundleTypeRole</key>
+            <string>Editor</string>
+            <key>LSItemContentTypes</key>
+            <array>
+                <string>com.avantgarde.document</string>
+            </array>
+            <key>LSHandlerRank</key>
+            <string>Owner</string>
+        </dict>
+        <dict>
+            <key>CFBundleTypeName</key>
+            <string>Text Document</string>
+            <key>CFBundleTypeRole</key>
+            <string>Editor</string>
+            <key>LSItemContentTypes</key>
+            <array>
+                <string>public.plain-text</string>
+                <string>public.rtf</string>
+            </array>
+            <key>LSHandlerRank</key>
+            <string>Alternate</string>
+        </dict>
+    </array>
+    <key>UTExportedTypeDeclarations</key>
+    <array>
+        <dict>
+            <key>UTTypeIdentifier</key>
+            <string>com.avantgarde.document</string>
+            <key>UTTypeDescription</key>
+            <string>Avant Garde Document</string>
+            <key>UTTypeConformsTo</key>
+            <array>
+                <string>public.data</string>
+                <string>public.composite-content</string>
+            </array>
+            <key>UTTypeTagSpecification</key>
+            <dict>
+                <key>public.filename-extension</key>
+                <array>
+                    <string>avantgarde</string>
+                </array>
+            </dict>
+        </dict>
+    </array>
+    <key>NSSupportsAutomaticTermination</key>
+    <true/>
+    <key>NSSupportsSuddenTermination</key>
+    <true/>
 </dict>
 </plist>

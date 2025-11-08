@@ -1,58 +1,29 @@
-// swift-tools-version:5.5
+// swift-tools-version:5.7
 import PackageDescription
 
 let package = Package(
     name: "AvantGarde",
     platforms: [
-        .macOS(.v11)
+        .macOS(.v12)
     ],
     products: [
         .executable(name: "AvantGarde", targets: ["AvantGarde"]),
     ],
-    dependencies: [],
+    dependencies: [
+        // Add external dependencies here if needed in the future
+    ],
     targets: [
-        .target(
+        .executableTarget(
             name: "AvantGarde",
-            dependencies: [
-                "Converters",
-                "Parsers",
-                "Audio",
-                "UI",
-                "Models",
-                "Editor"
+            path: "src",
+            resources: [
+                .copy("../Resources")
             ]
         ),
-        .target(
-            name: "Converters",
-            dependencies: []
-        ),
-        .target(
-            name: "Parsers",
-            dependencies: []
-        ),
-        .target(
-            name: "Audio",
-            dependencies: []
-        ),
-        .target(
-            name: "UI",
-            dependencies: []
-        ),
-        .target(
-            name: "Models",
-            dependencies: []
-        ),
-        .target(
-            name: "Editor",
-            dependencies: ["Models"]
-        ),
         .testTarget(
-            name: "ConverterTests",
-            dependencies: ["Converters"]
-        ),
-        .testTarget(
-            name: "AudioTests",
-            dependencies: ["Audio"]
+            name: "AvantGardeTests",
+            dependencies: ["AvantGarde"],
+            path: "Tests"
         ),
     ]
 )

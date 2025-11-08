@@ -8,12 +8,47 @@ class AvantGardeApp: NSApplication {
     
     override func finishLaunching() {
         super.finishLaunching()
-        
+
         // Setup menu bar
         setupMenuBar()
-        
-        // Create and show the main editor window
+
+        // Check if this is first launch
+        let hasCompletedWelcome = UserDefaults.standard.bool(forKey: "hasCompletedWelcome")
+
+        if !hasCompletedWelcome {
+            showWelcomeScreen()
+        } else {
+            showMainEditor()
+        }
+
+        // Listen for welcome completion
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(welcomeDidComplete),
+            name: .welcomeDidComplete,
+            object: nil
+        )
+    }
+
+    @objc private func welcomeDidComplete() {
         showMainEditor()
+    }
+
+    private func showWelcomeScreen() {
+        let welcomeViewController = WelcomeViewController()
+
+        let window = NSWindow(
+            contentRect: NSRect(x: 0, y: 0, width: 800, height: 600),
+            styleMask: [.titled, .closable],
+            backing: .buffered,
+            defer: false
+        )
+
+        window.title = "Welcome to Avant Garde"
+        window.titlebarAppearsTransparent = true
+        window.center()
+        window.contentViewController = welcomeViewController
+        window.makeKeyAndOrderFront(nil)
     }
     
     private func showMainEditor() {
@@ -364,8 +399,5 @@ class AvantGardeApp: NSApplication {
     }
 }
 
-// If running as a standalone app
-if ProcessInfo.processInfo.arguments.contains("--demo") {
-    let app = EbookConverterApp.shared
-    app.run()
-}
+// Entry point
+AvantGardeApp.main()
