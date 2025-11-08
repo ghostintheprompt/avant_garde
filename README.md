@@ -1,7 +1,8 @@
-# 🎨 **Avant Garde** - Professional Ebook Converter for Authors
+# 🎨 **Avant Garde** - Professional Ebook Authoring Tool
 
-> **The Ultimate Alternative to KDP's Limited Editor**  
-> Cutting-edge authoring tool with color psychology, audio feedback, and seamless publishing workflow
+> **Transform Your Writing Experience**
+> Research-backed color psychology • Professional audio feedback • One-click publishing
+> The modern alternative to KDP's limited editor
 
 ## ✨ Overview
 
