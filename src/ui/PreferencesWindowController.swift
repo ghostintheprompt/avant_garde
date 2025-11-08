@@ -61,7 +61,7 @@ class PreferencesWindowController: NSWindowController {
         showViewController(voiceSettingsViewController, title: "Text-to-Speech Settings")
     }
     
-    @objc private function showGeneralPreferences() {
+    @objc private func showGeneralPreferences() {
         let generalViewController = GeneralPreferencesViewController()
         showViewController(generalViewController, title: "General Settings")
     }

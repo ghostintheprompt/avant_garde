@@ -102,10 +102,10 @@ class TextToSpeech: NSObject {
     }
     
     func speakDocument(_ document: EbookDocument) {
-        let fullText = document.chapters.map { 
-            "\(chapter.title). \(chapter.content)" 
+        let fullText = document.chapters.map { chapter in
+            "\(chapter.title). \(chapter.content)"
         }.joined(separator: ". Next chapter. ")
-        
+
         speak(text: fullText)
     }
     

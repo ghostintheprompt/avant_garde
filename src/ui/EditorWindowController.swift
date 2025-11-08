@@ -401,6 +401,58 @@ class EditorWindowController: NSWindowController {
     @objc private func voiceSettings() {
         // Voice settings window logic
     }
+
+    // MARK: - Toggle Methods
+
+    @objc func toggleSidebar(_ sender: Any?) {
+        guard let splitView = window?.contentView?.subviews.first as? NSSplitView,
+              splitView.arrangedSubviews.count >= 2 else { return }
+
+        let sidebarView = splitView.arrangedSubviews[0]
+        sidebarView.isHidden.toggle()
+        splitView.adjustSubviews()
+    }
+
+    @objc func toggleStatistics() {
+        // Statistics panel is part of the sidebar, so we could toggle its visibility
+        // For now, we'll show an alert with current statistics
+        guard let document = self.document as? EbookDocument else { return }
+
+        let wordCount = document.getWordCount()
+        let charCount = document.getCharacterCount()
+        let readingTime = document.getEstimatedReadingTime()
+
+        let minutes = Int(readingTime / 60)
+        let hours = minutes / 60
+        let remainingMinutes = minutes % 60
+
+        let timeString = hours > 0 ? "\(hours)h \(remainingMinutes)m" : "\(minutes)m"
+
+        let alert = NSAlert()
+        alert.messageText = "Document Statistics"
+        alert.informativeText = """
+        Words: \(wordCount.formatted())
+        Characters: \(charCount.formatted())
+        Chapters: \(document.chapters.count)
+        Estimated Reading Time: \(timeString)
+        """
+        alert.alertStyle = .informational
+        alert.addButton(withTitle: "OK")
+        alert.runModal()
+    }
+
+    // MARK: - Document Management
+
+    convenience init(document: EbookDocument) {
+        let window = NSWindow(
+            contentRect: NSRect(x: 0, y: 0, width: 1200, height: 800),
+            styleMask: [.titled, .closable, .miniaturizable, .resizable],
+            backing: .buffered,
+            defer: false
+        )
+        self.init(window: window)
+        self.document = document
+    }
 }
 
 extension NSFont {
