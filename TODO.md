@@ -1,242 +1,302 @@
-# 📋 **Avant Garde - Development TODO**
+# Avant Garde - Development TODO (Realistic Assessment)
 
-> **Current Status**: Core architecture and features implemented  
-> **Next Phase**: UI implementation and user experience refinement
+**Last Updated:** 2026-01-13
+**Status:** 🔴 MAJOR IMPLEMENTATION WORK REQUIRED
+**Based on:** LLM Code Audit Report
 
 ---
 
-## 🚀 **HIGH PRIORITY - Core Functionality**
+## 🚨 CRITICAL ISSUES - Must Fix Before ANY Release
 
-### 🎨 **UI Implementation** *(Critical)*
-- [ ] Create Storyboard/XIB files for main interface
-- [ ] Connect Swift UI controllers to actual view components
-- [ ] Implement theme selector visual interface with color cards
-- [ ] Build preferences window with tabbed navigation
-- [ ] Create editor window with sidebar and formatting toolbar
-- [ ] Implement drag-and-drop chapter reordering
-- [ ] Add color theme live preview functionality
-- [ ] Test theme switching animations and transitions
+### 1. ⚠️ Implement Empty Action Methods (40-60 hours)
+**File:** `src/ui/EditorWindowController.swift`
 
-### 📝 **Editor Integration** *(Critical)*
-- [ ] Connect TextEditor.swift to actual NSTextView components
-- [ ] Implement rich text formatting controls (Bold, Italic, Underline)
-- [ ] Add chapter break insertion and management
-- [ ] Build real-time word count and statistics display
-- [ ] Implement image insertion and resizing
-- [ ] Add footnote creation and management
-- [ ] Create undo/redo functionality
-- [ ] Test auto-save and document recovery
+All toolbar buttons are currently non-functional placeholders:
+- [ ] `addChapter()` - Implement chapter creation logic
+- [ ] `makeBold()` - Apply bold formatting to selected text
+- [ ] `makeItalic()` - Apply italic formatting
+- [ ] `makeUnderline()` - Apply underline
+- [ ] `alignLeft()` - Set paragraph alignment
+- [ ] `alignCenter()` - Center text
+- [ ] `alignRight()` - Right align
+- [ ] `insertChapter()` - Insert chapter break
+- [ ] `insertImage()` - Add image picker and insertion
+- [ ] `insertFootnote()` - Create footnote system
+- [ ] `validateKDP()` - Connect to validation engine
+- [ ] `validateGoogle()` - Connect to validation engine
+- [ ] `playAudio()` - Connect to TextToSpeech
+- [ ] `voiceSettings()` - Open voice preferences
 
-### 🎙️ **Audio System Integration** *(High)*
-- [ ] Connect AudioController to UI playback controls
-- [ ] Implement chapter-by-chapter audio navigation
-- [ ] Add voice selection dropdown with quality indicators
-- [ ] Build audio progress tracking and scrubbing
-- [ ] Test voice installation guide workflow
-- [ ] Implement audio speed/pitch/volume controls
-- [ ] Add audio highlighting of current text being read
+### 2. ⚠️ Fix UI Architecture (20-30 hours)
 
-### 🔄 **Export Functionality** *(High)*
-- [ ] Complete KDP HTML export with proper formatting
-- [ ] Finish Google Play EPUB generation with metadata
-- [ ] Implement export progress indicators and status
+**Option A: Remove all @IBOutlet references (RECOMMENDED)**
+Files to fix:
+- [ ] `src/ui/TextEditor.swift` - Remove @IBOutlet, use programmatic UI
+- [ ] `src/ui/AudioViewController.swift` - Remove @IBOutlet, use programmatic UI
+- [ ] `src/ui/VoiceSettingsViewController.swift` - Remove @IBOutlet, use programmatic UI
+- [ ] `src/ui/ThemeSelectorViewController.swift` - Remove @IBOutlet, use programmatic UI
+
+**Option B: Create XIB/Storyboard files**
+- [ ] Create Main.storyboard
+- [ ] Create TextEditor.xib
+- [ ] Create AudioViewController.xib
+- [ ] etc.
+
+### 3. ⚠️ Fix Compilation Errors (4-6 hours)
+
+- [ ] **ConversionViewController.swift**
+  - Add `.unknown` case to EbookFormat enum
+  - Create Converter protocol
+  - Fix method call syntax errors
+  - Make converters conform to protocol
+
+- [ ] **FormatDetector.swift**
+  - Rename `detectFormat(of:)` to `detectFormat(filePath:)` OR
+  - Update EbookParser to use correct method signature
+
+- [ ] **EbookFormat enum**
+  ```swift
+  enum EbookFormat: String, CaseIterable {
+      case kdp = "KDP"
+      case google = "Google Play"
+      case epub = "EPUB"
+      case pdf = "PDF"
+      case mobi = "MOBI"
+      case azw3 = "AZW3"
+      case unknown = "Unknown"
+  }
+  ```
+
+### 4. ⚠️ Fix Memory Leaks (2-4 hours)
+
+- [ ] **ThemeSelectorViewController.swift:88** - Store and invalidate timer
+- [ ] Audit all closures for `[weak self]` usage
+- [ ] Add proper `deinit` methods where needed
+
+### 5. ⚠️ Remove Demo Code from Main Source (1-2 hours)
+
+- [ ] Move `ColorPsychologyDemo.swift` to `/demos` folder
+- [ ] Move `VoiceDemo.swift` to `/demos` folder
+- [ ] Update README to reference demos separately
+- [ ] Fix incorrect reference to `EbookConverterApp` (should be `AvantGardeApp`)
+
+---
+
+## 🔴 HIGH PRIORITY - For Beta Release
+
+### 6. Async/Await Implementation (10-15 hours)
+
+Make long-running operations non-blocking:
+- [ ] `KDPConverter.convertToKDP()` - Make async
+- [ ] `GoogleConverter.convertToGoogle()` - Make async
+- [ ] Update all callers to use `await`
+- [ ] Add progress indicators during export
+
+### 7. Proper Error Handling (6-8 hours)
+
+Replace alert-only error handling:
+- [ ] Add logging throughout (NSLog or os_log)
+- [ ] Integrate crash reporting (optional)
+- [ ] Handle specific error cases differently
+- [ ] Create error recovery flows
+
+### 8. Extract Duplicate Code (4-6 hours)
+
+- [ ] Create `PreferencesHelpers` utility class
+- [ ] Move `createSection`, `createCheckbox`, `createTextField` to shared location
+- [ ] Update both GeneralPreferencesViewController and EditorPreferencesViewController
+
+### 9. Complete TextEditor Integration (8-10 hours)
+
+- [ ] Connect `loadDocument()` to actual document system
+- [ ] Implement proper `saveDocument()` without calling `document.save(nil)`
+- [ ] Fix chapter parsing and extraction
+- [ ] Add undo/redo support
+
+### 10. AudioController Integration (6-8 hours)
+
+- [ ] Connect AudioViewController to AudioController properly
+- [ ] Implement chapter-by-chapter navigation
+- [ ] Add progress tracking UI
+- [ ] Fix hardcoded "Your text goes here" placeholder
+
+---
+
+## 🟡 MEDIUM PRIORITY - For 1.0 Release
+
+### 11. Format Detection (4-6 hours)
+
+- [ ] Implement content-based format detection (not just extension)
+- [ ] Add magic number/header checking
+- [ ] Support all claimed formats
+
+### 12. Complete Export System (8-12 hours)
+
+- [ ] Finish KDP HTML generation with proper validation
+- [ ] Complete Google EPUB with full metadata
+- [ ] Test exports with actual KDP and Google Play uploads
 - [ ] Add export validation and error reporting
-- [ ] Test one-click export workflow
-- [ ] Create export history and re-export functionality
+
+### 13. Dependency Injection (10-15 hours)
+
+- [ ] Create ServiceContainer or similar
+- [ ] Inject AudioController instead of creating inline
+- [ ] Inject TextToSpeech where needed
+- [ ] Make code more testable
+
+### 14. Add Unit Tests (20-30 hours)
+
+Currently ZERO tests exist:
+- [ ] Test ColorThemeManager theme selection
+- [ ] Test KDPConverter output format
+- [ ] Test GoogleConverter EPUB generation
+- [ ] Test EbookDocument chapter management
+- [ ] Test FormattingEngine validation
+- [ ] Test TextToSpeech voice selection
+- [ ] Test AudioController playback logic
+
+### 15. Accessibility (6-8 hours)
+
+- [ ] Add accessibility labels to all buttons
+- [ ] Add accessibility identifiers for testing
+- [ ] Test with VoiceOver
+- [ ] Ensure keyboard navigation works
 
 ---
 
-## 🎯 **MEDIUM PRIORITY - User Experience**
+## 🟢 NICE TO HAVE - Future Versions
 
-### 🧪 **Testing & Validation**
-- [ ] Create comprehensive unit tests for all modules
-- [ ] Add integration tests for export functionality
-- [ ] Test color psychology theme effects with real users
-- [ ] Validate KDP and Google Play export compatibility
-- [ ] Performance testing with large documents (100+ pages)
-- [ ] Memory usage optimization and leak detection
-- [ ] Cross-platform testing (Intel vs Apple Silicon Macs)
+### 16. Enhanced Features
+- [ ] Implement drag-and-drop chapter reordering
+- [ ] Add image insertion with preview
+- [ ] Create footnote management system
+- [ ] Add auto-save functionality
+- [ ] Implement document recovery
 
-### 🎨 **Polish & Refinement**
-- [ ] Design and create app icon (1024x1024 and all sizes)
-- [ ] Add app launch screen and loading animations
-- [ ] Implement keyboard shortcuts for all major functions
-- [ ] Add tooltips and help text throughout interface
-- [ ] Create contextual menus for right-click actions
-- [ ] Implement window state persistence (size, position)
-- [ ] Add recent documents menu and file management
+### 17. Performance
+- [ ] Optimize for large documents (100k+ words)
+- [ ] Add document streaming
+- [ ] Implement background export
+- [ ] Profile and optimize startup time
 
-### 📚 **Documentation & Help**
-- [ ] Create in-app help system with searchable topics
-- [ ] Build interactive onboarding tutorial for new users
-- [ ] Add color psychology explanation modal with research citations
-- [ ] Create video tutorials for key features
-- [ ] Write comprehensive user manual
-- [ ] Add troubleshooting guides for common issues
+### 18. Polish
+- [ ] Create app icon (all sizes)
+- [ ] Add launch screen
+- [ ] Implement keyboard shortcuts
+- [ ] Add tooltips throughout
+- [ ] Create contextual menus
 
 ---
 
-## 🔧 **TECHNICAL IMPROVEMENTS**
+## 📊 REALISTIC TIME ESTIMATES
 
-### 🏗️ **Architecture & Performance**
-- [ ] Optimize memory usage for large documents
-- [ ] Implement document streaming for very large files
-- [ ] Add background processing for export operations
-- [ ] Create plugin architecture for future extensions
-- [ ] Implement crash reporting and analytics (privacy-focused)
-- [ ] Add automatic backup and version history
-- [ ] Optimize app startup time and responsiveness
+### To Minimum Viable Product (MVP):
+- **Critical Issues:** 80-100 hours
+- **High Priority:** 50-70 hours
+- **Testing & Bug Fixing:** 40-60 hours
+- **Total:** 170-230 hours (~5-7 weeks full-time)
 
-### 🔐 **Security & Privacy**
-- [ ] Implement document encryption for sensitive content
-- [ ] Add secure cloud sync option (optional)
-- [ ] Create privacy-focused analytics (no personal data)
-- [ ] Implement secure export with digital signatures
-- [ ] Add document watermarking options
-- [ ] Create user data export functionality (GDPR compliance)
-
-### 🌐 **Internationalization**
-- [ ] Add localization support for multiple languages
-- [ ] Translate color psychology explanations
-- [ ] Support right-to-left text for Arabic/Hebrew
-- [ ] Add region-specific voice recommendations
-- [ ] Implement currency and date formatting options
+### To App Store Ready:
+- Add Medium Priority tasks: +60-90 hours
+- Add App Store prep: +20-30 hours
+- **Total:** 250-350 hours (~8-12 weeks full-time)
 
 ---
 
-## 🚀 **FUTURE FEATURES - Innovation**
+## 🎯 RECOMMENDED DEVELOPMENT PHASES
 
-### 🤖 **AI Integration** *(Future)*
-- [ ] AI-powered writing suggestions based on genre
-- [ ] Intelligent chapter organization recommendations
-- [ ] Automated grammar and style checking
-- [ ] AI voice narration with custom character voices
-- [ ] Smart theme recommendations based on content analysis
-- [ ] Predictive text completion for faster writing
+### Phase 1: Make It Work (Weeks 1-3)
+Focus on critical issues - get the app actually functional:
+1. Fix compilation errors
+2. Implement all empty action methods
+3. Fix UI architecture (@IBOutlet issues)
+4. Fix memory leaks
 
-### 📱 **Ecosystem Expansion** *(Future)*
-- [ ] iOS companion app for mobile writing
-- [ ] Apple Watch app for voice notes and ideas
-- [ ] iCloud sync across all devices
-- [ ] Collaborative editing with real-time co-authoring
-- [ ] Web app for cross-platform accessibility
-- [ ] Integration with popular writing tools (Scrivener, Ulysses)
+### Phase 2: Make It Stable (Weeks 4-5)
+Focus on high priority issues:
+1. Add async/await
+2. Proper error handling
+3. Complete audio integration
+4. Basic testing
 
-### 🎵 **Advanced Audio Features** *(Future)*
-- [ ] Custom voice training for personalized narration
-- [ ] Background music integration for mood enhancement
-- [ ] Voice emotion detection for dialogue improvement
-- [ ] Audio book generation with chapter markers
-- [ ] Multi-voice casting for different characters
-- [ ] Audio export in multiple formats (MP3, M4A, WAV)
+### Phase 3: Make It Good (Weeks 6-8)
+Focus on medium priority:
+1. Complete export system
+2. Add unit tests
+3. Fix duplicate code
+4. Accessibility
 
----
-
-## 📊 **MARKETING & DISTRIBUTION**
-
-### 🎯 **App Store Preparation**
-- [ ] Create compelling App Store screenshots (10 images)
-- [ ] Write persuasive App Store description with keywords
-- [ ] Design promotional graphics and feature banners
-- [ ] Create app preview video showcasing key features
-- [ ] Set up App Store Connect account and metadata
-- [ ] Implement in-app purchase system (if needed)
-- [ ] Prepare press kit with high-resolution assets
-
-### 📢 **Marketing Strategy**
-- [ ] Identify target author communities and forums
-- [ ] Create demo videos for social media marketing
-- [ ] Reach out to writing bloggers and influencers
-- [ ] Prepare press release for launch announcement
-- [ ] Design website landing page showcasing features
-- [ ] Create email marketing campaign for beta users
-- [ ] Plan launch strategy with pricing and promotion
-
-### 👥 **Community Building**
-- [ ] Set up Discord/Slack community for users
-- [ ] Create social media accounts (Twitter, Instagram)
-- [ ] Launch beta testing program with author feedback
-- [ ] Establish customer support system
-- [ ] Create user feedback collection and voting system
-- [ ] Plan regular feature updates and roadmap sharing
+### Phase 4: Make It Ship (Weeks 9-12)
+App Store preparation:
+1. Icons and assets
+2. Screenshots
+3. App Store metadata
+4. Beta testing
+5. Submission
 
 ---
 
-## 🎉 **LAUNCH MILESTONES**
+## 🔍 WHAT'S ACTUALLY WORKING
 
-### 🥇 **Version 1.0 - Initial Release**
-**Target**: Core authoring functionality with color psychology
-- ✅ Color psychology theme system
-- ✅ Rich text editor with formatting
-- ✅ Audio playback system
-- ✅ KDP and Google Play export
-- [ ] Polished UI and user experience
-- [ ] Comprehensive testing and bug fixes
+To be clear about current state:
 
-### 🥈 **Version 1.1 - Enhanced Features**
-**Target**: Advanced editing and productivity features
-- [ ] Advanced chapter management
-- [ ] Enhanced audio controls and voices
-- [ ] Performance optimizations
-- [ ] Additional export formats
-- [ ] User-requested feature implementations
+### ✅ FULLY WORKING:
+- ColorThemeManager theme definitions
+- ThemeColors and theme switching logic
+- VoiceManager and voice listing
+- Document model structure (Chapter, BookMetadata)
+- Basic app menu structure
 
-### 🥉 **Version 1.2 - Ecosystem Integration**
-**Target**: Platform integration and collaboration
-- [ ] iCloud sync and backup
-- [ ] iOS companion app
-- [ ] Collaboration features
-- [ ] Advanced AI writing assistance
-- [ ] Professional publishing workflow
+### ⚠️ PARTIALLY WORKING:
+- EditorWindowController UI layout (but buttons do nothing)
+- PreferencesWindow structure (but settings don't persist properly)
+- Audio system architecture (but not connected to UI)
 
----
-
-## 📝 **DEVELOPMENT NOTES**
-
-### 🔧 **Technical Debt**
-- Swift Package Manager configuration needs refinement
-- Some UI controllers need actual view implementations
-- Audio system requires testing with all voice types
-- Export validators need comprehensive error handling
-
-### 💡 **Innovation Opportunities**
-- First-to-market with scientific color psychology for writers
-- Potential patent opportunities for cognitive enhancement features
-- Research partnerships with writing and psychology institutions
-- Academic studies on productivity improvements
-
-### 🎯 **Success Metrics**
-- User retention rate after first week
-- Average session length and frequency
-- Export success rate and user satisfaction
-- Color theme usage patterns and preferences
-- Audio feature adoption and feedback
+### ❌ NOT WORKING:
+- All text formatting buttons
+- Chapter creation/management UI
+- Image insertion
+- Footnote system
+- Actual KDP/Google export testing
+- Format validation
+- Audio playback from UI
+- Document save/load (broken)
 
 ---
 
-## 🤝 **COLLABORATION**
+## 📝 NOTES FROM AUDIT
 
-### 👥 **Team Roles Needed**
-- [ ] iOS/macOS Developer for UI implementation
-- [ ] UX/UI Designer for interface refinement
-- [ ] Audio Engineer for voice quality optimization
-- [ ] Technical Writer for documentation
-- [ ] Marketing Specialist for launch strategy
-- [ ] Beta Testers from author community
+**Key Finding:** This codebase has excellent architecture and design, but approximately 60% of the UI methods are empty placeholders. The core logic exists, but the connections between UI and logic are incomplete.
 
-### 📚 **Resources & Research**
-- Cognitive psychology research papers for feature validation
-- Author community feedback and feature requests
-- Competitive analysis of existing writing tools
-- Platform guidelines for KDP and Google Play Books
-- Accessibility guidelines for inclusive design
+**Not a "Bad" Codebase:** The structure is professional and well-organized. It just needs the implementation work to connect all the pieces.
+
+**LLM Generation Evidence:** Typical patterns of AI-generated code - good structure, comprehensive features, but many empty methods and incomplete implementations.
 
 ---
 
-**Last Updated**: May 29, 2025  
-**Project Status**: Core Features Complete, UI Implementation Phase  
-**Next Major Milestone**: Version 1.0 Beta Release
+## 💡 STRATEGIC RECOMMENDATIONS
+
+1. **Don't Rush to App Store** - 170+ hours of work remain
+2. **Focus on Core First** - Get editing and export working before polish
+3. **Test Early, Test Often** - Start writing tests now, not later
+4. **Consider Pivot** - Maybe release as open-source alpha first?
+5. **Get Real Users** - Beta test with actual authors ASAP
+6. **Be Honest About Timeline** - 2-3 months minimum to App Store
 
 ---
 
-*🎨 **Avant Garde** - Professional authoring tools for modern writers*
+## 🎯 SUCCESS DEFINITION
+
+**Minimum for 1.0 Release:**
+- All toolbar buttons functional
+- Can create, edit, save, and load documents
+- Can add and organize chapters
+- Can export to KDP (tested with actual upload)
+- Can export to Google Play (tested with actual upload)
+- Audio playback works
+- No crashes or data loss
+- Passes App Store review guidelines
+
+---
+
+**Reality Check:** This is a great start on a professional application, but it needs significant implementation work before it's ready for users. The architecture is sound - now it needs the execution.
