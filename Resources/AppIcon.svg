@@ -1,0 +1,59 @@
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background gradient -->
+  <defs>
+    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#6366f1;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#8b5cf6;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="bookGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#ffffff;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#f3f4f6;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+
+  <!-- Rounded rectangle background -->
+  <rect width="1024" height="1024" rx="180" fill="url(#bgGradient)"/>
+
+  <!-- Book icon representing authoring -->
+  <g transform="translate(212, 212)">
+    <!-- Open book -->
+    <path d="M100 150 Q100 100 150 100 L250 100 Q300 100 300 150 L300 500 Q300 550 250 550 L150 550 Q100 550 100 500 Z"
+          fill="url(#bookGradient)" stroke="#d1d5db" stroke-width="8"/>
+    <path d="M500 150 Q500 100 450 100 L350 100 Q300 100 300 150 L300 500 Q300 550 350 550 L450 550 Q500 550 500 500 Z"
+          fill="url(#bookGradient)" stroke="#d1d5db" stroke-width="8"/>
+
+    <!-- Center binding -->
+    <rect x="290" y="100" width="20" height="450" fill="#9ca3af"/>
+
+    <!-- Page lines (left page) -->
+    <line x1="130" y1="180" x2="270" y2="180" stroke="#9ca3af" stroke-width="4" opacity="0.5"/>
+    <line x1="130" y1="220" x2="270" y2="220" stroke="#9ca3af" stroke-width="4" opacity="0.5"/>
+    <line x1="130" y1="260" x2="270" y2="260" stroke="#9ca3af" stroke-width="4" opacity="0.5"/>
+    <line x1="130" y1="300" x2="270" y2="300" stroke="#9ca3af" stroke-width="4" opacity="0.5"/>
+
+    <!-- Page lines (right page) -->
+    <line x1="330" y1="180" x2="470" y2="180" stroke="#9ca3af" stroke-width="4" opacity="0.5"/>
+    <line x1="330" y1="220" x2="470" y2="220" stroke="#9ca3af" stroke-width="4" opacity="0.5"/>
+    <line x1="330" y1="260" x2="470" y2="260" stroke="#9ca3af" stroke-width="4" opacity="0.5"/>
+    <line x1="330" y1="300" x2="470" y2="300" stroke="#9ca3af" stroke-width="4" opacity="0.5"/>
+
+    <!-- Quill pen overlay (representing authoring) -->
+    <g transform="translate(380, 320) rotate(-45)">
+      <path d="M0 0 L20 80 L10 120 L0 80 Z" fill="#fbbf24" stroke="#f59e0b" stroke-width="2"/>
+      <circle cx="10" cy="0" r="12" fill="#f59e0b"/>
+      <path d="M5 120 L10 150 L15 120" fill="#374151"/>
+    </g>
+
+    <!-- Color palette indicator (small circles) -->
+    <circle cx="140" cy="400" r="20" fill="#6366f1" opacity="0.8"/>
+    <circle cx="180" cy="400" r="20" fill="#ec4899" opacity="0.8"/>
+    <circle cx="220" cy="400" r="20" fill="#10b981" opacity="0.8"/>
+    <circle cx="260" cy="400" r="20" fill="#f59e0b" opacity="0.8"/>
+  </g>
+
+  <!-- Subtle sparkle effect -->
+  <circle cx="820" cy="220" r="8" fill="#ffffff" opacity="0.8"/>
+  <circle cx="850" cy="280" r="6" fill="#ffffff" opacity="0.6"/>
+  <circle cx="180" cy="200" r="10" fill="#ffffff" opacity="0.7"/>
+  <circle cx="220" cy="160" r="6" fill="#ffffff" opacity="0.5"/>
+</svg>
