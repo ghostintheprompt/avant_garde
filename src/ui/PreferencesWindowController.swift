@@ -14,13 +14,17 @@ class PreferencesWindowController: NSWindowController {
             backing: .buffered,
             defer: false
         )
-        
+
         self.init(window: window)
         setupWindow()
         setupToolbar()
         setupInitialView()
     }
-    
+
+    deinit {
+        NotificationCenter.default.removeObserver(self)
+    }
+
     private func setupWindow() {
         guard let window = window else { return }
         
@@ -180,24 +184,24 @@ class GeneralPreferencesViewController: NSViewController {
         stackView.translatesAutoresizingMaskIntoConstraints = false
         
         // Auto-save settings
-        let autoSaveSection = createSection(title: "Auto-Save", controls: [
-            createCheckbox(title: "Auto-save documents every 5 minutes", key: "autoSaveEnabled"),
-            createCheckbox(title: "Create backup copies", key: "createBackups"),
-            createTextField(label: "Backup location:", key: "backupPath", placeholder: "~/Documents/Ebook Backups")
+        let autoSaveSection = PreferencesHelpers.createSection(title: "Auto-Save", controls: [
+            PreferencesHelpers.createCheckbox(title: "Auto-save documents every 5 minutes", key: "autoSaveEnabled", target: self, action: #selector(checkboxChanged(_:))),
+            PreferencesHelpers.createCheckbox(title: "Create backup copies", key: "createBackups", target: self, action: #selector(checkboxChanged(_:))),
+            PreferencesHelpers.createTextField(label: "Backup location:", key: "backupPath", placeholder: "~/Documents/Ebook Backups", target: self, action: #selector(textFieldChanged(_:)))
         ])
-        
+
         // Export settings
-        let exportSection = createSection(title: "Export Settings", controls: [
-            createPopup(label: "Default export format:", items: ["KDP HTML", "Google EPUB", "Both"], key: "defaultExportFormat"),
-            createCheckbox(title: "Include chapter navigation", key: "includeNavigation"),
-            createCheckbox(title: "Optimize images for e-readers", key: "optimizeImages")
+        let exportSection = PreferencesHelpers.createSection(title: "Export Settings", controls: [
+            PreferencesHelpers.createPopup(label: "Default export format:", items: ["KDP HTML", "Google EPUB", "Both"], key: "defaultExportFormat", target: self, action: #selector(popupChanged(_:))),
+            PreferencesHelpers.createCheckbox(title: "Include chapter navigation", key: "includeNavigation", target: self, action: #selector(checkboxChanged(_:))),
+            PreferencesHelpers.createCheckbox(title: "Optimize images for e-readers", key: "optimizeImages", target: self, action: #selector(checkboxChanged(_:)))
         ])
-        
+
         // Startup settings
-        let startupSection = createSection(title: "Startup", controls: [
-            createCheckbox(title: "Restore last session on startup", key: "restoreSession"),
-            createCheckbox(title: "Show welcome screen", key: "showWelcome"),
-            createCheckbox(title: "Check for updates automatically", key: "autoCheckUpdates")
+        let startupSection = PreferencesHelpers.createSection(title: "Startup", controls: [
+            PreferencesHelpers.createCheckbox(title: "Restore last session on startup", key: "restoreSession", target: self, action: #selector(checkboxChanged(_:))),
+            PreferencesHelpers.createCheckbox(title: "Show welcome screen", key: "showWelcome", target: self, action: #selector(checkboxChanged(_:))),
+            PreferencesHelpers.createCheckbox(title: "Check for updates automatically", key: "autoCheckUpdates", target: self, action: #selector(checkboxChanged(_:)))
         ])
         
         stackView.addArrangedSubview(autoSaveSection)
@@ -212,113 +216,9 @@ class GeneralPreferencesViewController: NSViewController {
             stackView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -40)
         ])
     }
-    
-    private func createSection(title: String, controls: [NSView]) -> NSView {
-        let section = NSView()
-        let stackView = NSStackView()
-        stackView.orientation = .vertical
-        stackView.spacing = 10
-        stackView.translatesAutoresizingMaskIntoConstraints = false
-        
-        // Section title
-        let titleLabel = NSTextField(labelWithString: title)
-        titleLabel.font = NSFont.systemFont(ofSize: 16, weight: .semibold)
-        stackView.addArrangedSubview(titleLabel)
-        
-        // Add controls
-        for control in controls {
-            stackView.addArrangedSubview(control)
-        }
-        
-        section.addSubview(stackView)
-        
-        NSLayoutConstraint.activate([
-            stackView.topAnchor.constraint(equalTo: section.topAnchor),
-            stackView.leadingAnchor.constraint(equalTo: section.leadingAnchor),
-            stackView.trailingAnchor.constraint(equalTo: section.trailingAnchor),
-            stackView.bottomAnchor.constraint(equalTo: section.bottomAnchor)
-        ])
-        
-        return section
-    }
-    
-    private func createCheckbox(title: String, key: String) -> NSButton {
-        let checkbox = NSButton(checkboxWithTitle: title, target: self, action: #selector(checkboxChanged(_:)))
-        checkbox.state = UserDefaults.standard.bool(forKey: key) ? .on : .off
-        checkbox.identifier = NSUserInterfaceItemIdentifier(key)
-        return checkbox
-    }
-    
-    private func createTextField(label: String, key: String, placeholder: String) -> NSView {
-        let container = NSView()
-        let stackView = NSStackView()
-        stackView.orientation = .horizontal
-        stackView.spacing = 10
-        stackView.translatesAutoresizingMaskIntoConstraints = false
-        
-        let labelField = NSTextField(labelWithString: label)
-        labelField.setContentHuggingPriority(.defaultHigh, for: .horizontal)
-        
-        let textField = NSTextField()
-        textField.stringValue = UserDefaults.standard.string(forKey: key) ?? ""
-        textField.placeholderString = placeholder
-        textField.identifier = NSUserInterfaceItemIdentifier(key)
-        textField.target = self
-        textField.action = #selector(textFieldChanged(_:))
-        
-        stackView.addArrangedSubview(labelField)
-        stackView.addArrangedSubview(textField)
-        
-        container.addSubview(stackView)
-        
-        NSLayoutConstraint.activate([
-            stackView.topAnchor.constraint(equalTo: container.topAnchor),
-            stackView.leadingAnchor.constraint(equalTo: container.leadingAnchor),
-            stackView.trailingAnchor.constraint(equalTo: container.trailingAnchor),
-            stackView.bottomAnchor.constraint(equalTo: container.bottomAnchor),
-            labelField.widthAnchor.constraint(equalToConstant: 150)
-        ])
-        
-        return container
-    }
-    
-    private func createPopup(label: String, items: [String], key: String) -> NSView {
-        let container = NSView()
-        let stackView = NSStackView()
-        stackView.orientation = .horizontal
-        stackView.spacing = 10
-        stackView.translatesAutoresizingMaskIntoConstraints = false
-        
-        let labelField = NSTextField(labelWithString: label)
-        labelField.setContentHuggingPriority(.defaultHigh, for: .horizontal)
-        
-        let popup = NSPopUpButton()
-        popup.addItems(withTitles: items)
-        popup.identifier = NSUserInterfaceItemIdentifier(key)
-        popup.target = self
-        popup.action = #selector(popupChanged(_:))
-        
-        if let savedValue = UserDefaults.standard.string(forKey: key),
-           let index = items.firstIndex(of: savedValue) {
-            popup.selectItem(at: index)
-        }
-        
-        stackView.addArrangedSubview(labelField)
-        stackView.addArrangedSubview(popup)
-        
-        container.addSubview(stackView)
-        
-        NSLayoutConstraint.activate([
-            stackView.topAnchor.constraint(equalTo: container.topAnchor),
-            stackView.leadingAnchor.constraint(equalTo: container.leadingAnchor),
-            stackView.trailingAnchor.constraint(equalTo: container.trailingAnchor),
-            stackView.bottomAnchor.constraint(equalTo: container.bottomAnchor),
-            labelField.widthAnchor.constraint(equalToConstant: 150)
-        ])
-        
-        return container
-    }
-    
+
+    // MARK: - Action Handlers
+
     @objc private func checkboxChanged(_ sender: NSButton) {
         guard let key = sender.identifier?.rawValue else { return }
         UserDefaults.standard.set(sender.state == .on, forKey: key)
@@ -361,26 +261,26 @@ class EditorPreferencesViewController: NSViewController {
         let fontSection = createFontSection()
         
         // Writing settings
-        let writingSection = createSection(title: "Writing Settings", controls: [
-            createCheckbox(title: "Show word count in status bar", key: "showWordCount"),
-            createCheckbox(title: "Highlight misspelled words", key: "spellcheck"),
-            createCheckbox(title: "Auto-correct common mistakes", key: "autocorrect"),
-            createCheckbox(title: "Smart quotes and dashes", key: "smartQuotes")
+        let writingSection = PreferencesHelpers.createSection(title: "Writing Settings", controls: [
+            PreferencesHelpers.createCheckbox(title: "Show word count in status bar", key: "showWordCount", target: self, action: #selector(checkboxChanged(_:))),
+            PreferencesHelpers.createCheckbox(title: "Highlight misspelled words", key: "spellcheck", target: self, action: #selector(checkboxChanged(_:))),
+            PreferencesHelpers.createCheckbox(title: "Auto-correct common mistakes", key: "autocorrect", target: self, action: #selector(checkboxChanged(_:))),
+            PreferencesHelpers.createCheckbox(title: "Smart quotes and dashes", key: "smartQuotes", target: self, action: #selector(checkboxChanged(_:)))
         ])
-        
+
         // Chapter settings
-        let chapterSection = createSection(title: "Chapter Management", controls: [
-            createCheckbox(title: "Auto-number chapters", key: "autoNumberChapters"),
-            createTextField(label: "Chapter prefix:", key: "chapterPrefix", placeholder: "Chapter"),
-            createCheckbox(title: "Show chapter word counts", key: "showChapterCounts")
+        let chapterSection = PreferencesHelpers.createSection(title: "Chapter Management", controls: [
+            PreferencesHelpers.createCheckbox(title: "Auto-number chapters", key: "autoNumberChapters", target: self, action: #selector(checkboxChanged(_:))),
+            PreferencesHelpers.createTextField(label: "Chapter prefix:", key: "chapterPrefix", placeholder: "Chapter", target: self, action: #selector(textFieldChanged(_:))),
+            PreferencesHelpers.createCheckbox(title: "Show chapter word counts", key: "showChapterCounts", target: self, action: #selector(checkboxChanged(_:)))
         ])
-        
+
         // Display settings
-        let displaySection = createSection(title: "Display", controls: [
-            createSlider(label: "Text size:", key: "textSize", min: 12, max: 24),
-            createSlider(label: "Line spacing:", key: "lineSpacing", min: 1.0, max: 2.0),
-            createCheckbox(title: "Show ruler", key: "showRuler"),
-            createCheckbox(title: "Wrap text to page width", key: "wrapText")
+        let displaySection = PreferencesHelpers.createSection(title: "Display", controls: [
+            PreferencesHelpers.createSlider(label: "Text size:", key: "textSize", min: 12, max: 24, target: self, action: #selector(sliderChanged(_:))),
+            PreferencesHelpers.createSlider(label: "Line spacing:", key: "lineSpacing", min: 1.0, max: 2.0, target: self, action: #selector(sliderChanged(_:))),
+            PreferencesHelpers.createCheckbox(title: "Show ruler", key: "showRuler", target: self, action: #selector(checkboxChanged(_:))),
+            PreferencesHelpers.createCheckbox(title: "Wrap text to page width", key: "wrapText", target: self, action: #selector(checkboxChanged(_:)))
         ])
         
         stackView.addArrangedSubview(fontSection)
@@ -488,137 +388,16 @@ class EditorPreferencesViewController: NSViewController {
         // Update UI or notify editor
         NotificationCenter.default.post(name: .editorFontChanged, object: font)
     }
-    
-    private func createSlider(label: String, key: String, min: Double, max: Double) -> NSView {
-        let container = NSView()
-        let stackView = NSStackView()
-        stackView.orientation = .horizontal
-        stackView.spacing = 10
-        stackView.translatesAutoresizingMaskIntoConstraints = false
-        
-        let labelField = NSTextField(labelWithString: label)
-        labelField.setContentHuggingPriority(.defaultHigh, for: .horizontal)
-        
-        let slider = NSSlider()
-        slider.minValue = min
-        slider.maxValue = max
-        slider.doubleValue = UserDefaults.standard.double(forKey: key)
-        if slider.doubleValue == 0 {
-            slider.doubleValue = min
-        }
-        slider.identifier = NSUserInterfaceItemIdentifier(key)
-        slider.target = self
-        slider.action = #selector(sliderChanged(_:))
-        
-        let valueLabel = NSTextField(labelWithString: String(format: "%.1f", slider.doubleValue))
-        valueLabel.setContentHuggingPriority(.defaultHigh, for: .horizontal)
-        valueLabel.identifier = NSUserInterfaceItemIdentifier(key + "_label")
-        
-        stackView.addArrangedSubview(labelField)
-        stackView.addArrangedSubview(slider)
-        stackView.addArrangedSubview(valueLabel)
-        
-        container.addSubview(stackView)
-        
-        NSLayoutConstraint.activate([
-            stackView.topAnchor.constraint(equalTo: container.topAnchor),
-            stackView.leadingAnchor.constraint(equalTo: container.leadingAnchor),
-            stackView.trailingAnchor.constraint(equalTo: container.trailingAnchor),
-            stackView.bottomAnchor.constraint(equalTo: container.bottomAnchor),
-            labelField.widthAnchor.constraint(equalToConstant: 150),
-            valueLabel.widthAnchor.constraint(equalToConstant: 40)
-        ])
-        
-        return container
-    }
-    
+
     @objc private func sliderChanged(_ sender: NSSlider) {
         guard let key = sender.identifier?.rawValue else { return }
         UserDefaults.standard.set(sender.doubleValue, forKey: key)
-        
+
         // Update value label
         if let valueLabel = view.viewWithTag(1) as? NSTextField,
            valueLabel.identifier?.rawValue == key + "_label" {
             valueLabel.stringValue = String(format: "%.1f", sender.doubleValue)
         }
-    }
-    
-    // Use the same helper methods from GeneralPreferencesViewController
-    private func createSection(title: String, controls: [NSView]) -> NSView {
-        let section = NSView()
-        let stackView = NSStackView()
-        stackView.orientation = .vertical
-        stackView.spacing = 10
-        stackView.translatesAutoresizingMaskIntoConstraints = false
-        
-        let titleLabel = NSTextField(labelWithString: title)
-        titleLabel.font = NSFont.systemFont(ofSize: 16, weight: .semibold)
-        stackView.addArrangedSubview(titleLabel)
-        
-        for control in controls {
-            stackView.addArrangedSubview(control)
-        }
-        
-        section.addSubview(stackView)
-        
-        NSLayoutConstraint.activate([
-            stackView.topAnchor.constraint(equalTo: section.topAnchor),
-            stackView.leadingAnchor.constraint(equalTo: section.leadingAnchor),
-            stackView.trailingAnchor.constraint(equalTo: section.trailingAnchor),
-            stackView.bottomAnchor.constraint(equalTo: section.bottomAnchor)
-        ])
-        
-        return section
-    }
-    
-    private func createCheckbox(title: String, key: String) -> NSButton {
-        let checkbox = NSButton(checkboxWithTitle: title, target: self, action: #selector(checkboxChanged(_:)))
-        checkbox.state = UserDefaults.standard.bool(forKey: key) ? .on : .off
-        checkbox.identifier = NSUserInterfaceItemIdentifier(key)
-        return checkbox
-    }
-    
-    private func createTextField(label: String, key: String, placeholder: String) -> NSView {
-        let container = NSView()
-        let stackView = NSStackView()
-        stackView.orientation = .horizontal
-        stackView.spacing = 10
-        stackView.translatesAutoresizingMaskIntoConstraints = false
-        
-        let labelField = NSTextField(labelWithString: label)
-        labelField.setContentHuggingPriority(.defaultHigh, for: .horizontal)
-        
-        let textField = NSTextField()
-        textField.stringValue = UserDefaults.standard.string(forKey: key) ?? ""
-        textField.placeholderString = placeholder
-        textField.identifier = NSUserInterfaceItemIdentifier(key)
-        textField.target = self
-        textField.action = #selector(textFieldChanged(_:))
-        
-        stackView.addArrangedSubview(labelField)
-        stackView.addArrangedSubview(textField)
-        
-        container.addSubview(stackView)
-        
-        NSLayoutConstraint.activate([
-            stackView.topAnchor.constraint(equalTo: container.topAnchor),
-            stackView.leadingAnchor.constraint(equalTo: container.leadingAnchor),
-            stackView.trailingAnchor.constraint(equalTo: container.trailingAnchor),
-            stackView.bottomAnchor.constraint(equalTo: container.bottomAnchor),
-            labelField.widthAnchor.constraint(equalToConstant: 150)
-        ])
-        
-        return container
-    }
-    
-    @objc private func checkboxChanged(_ sender: NSButton) {
-        guard let key = sender.identifier?.rawValue else { return }
-        UserDefaults.standard.set(sender.state == .on, forKey: key)
-    }
-    
-    @objc private func textFieldChanged(_ sender: NSTextField) {
-        guard let key = sender.identifier?.rawValue else { return }
-        UserDefaults.standard.set(sender.stringValue, forKey: key)
     }
 }
 

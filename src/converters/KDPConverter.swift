@@ -1,35 +1,92 @@
 import Foundation
 
-class KDPConverter {
-    func convertToKDP(document: EbookDocument) throws -> Data {
+class KDPConverter: Converter {
+
+    // MARK: - Async/Await API
+
+    /// Asynchronously converts an EbookDocument to KDP format
+    /// - Parameter document: The document to convert
+    /// - Returns: KDP-formatted data
+    /// - Throws: ConversionError if conversion fails
+    func convertToKDP(document: EbookDocument) async throws -> Data {
+        Logger.info("Starting KDP conversion for document: \(document.metadata.title)", category: .conversion)
+
+        return try await withCheckedThrowingContinuation { continuation in
+            Task {
+                do {
+                    let data = try convertToKDPSync(document: document)
+                    Logger.info("KDP conversion completed successfully. Size: \(data.count) bytes", category: .conversion)
+                    continuation.resume(returning: data)
+                } catch {
+                    Logger.error("KDP conversion failed", error: error, category: .conversion)
+                    continuation.resume(throwing: error)
+                }
+            }
+        }
+    }
+
+    // MARK: - Synchronous Implementation
+
+    private func convertToKDPSync(document: EbookDocument) throws -> Data {
         // Implementation for converting EbookDocument to .kdp format
         let formattingEngine = FormattingEngine()
-        
+
+        // Validate document before conversion
+        guard !document.chapters.isEmpty else {
+            Logger.warning("KDP conversion attempted on document with no chapters", category: .conversion)
+            throw ConversionError.invalidData
+        }
+
+        Logger.debug("Converting \(document.chapters.count) chapters to KDP format", category: .conversion)
+
         // Optimize formatting for KDP
         let optimizedContent = optimizeDocumentForKDP(document)
-        
+
         // Generate KDP-formatted content
         var kdpContent = generateKDPHeader(document.metadata)
-        
+
         for chapter in optimizedContent.chapters {
             kdpContent += generateKDPChapter(chapter)
         }
-        
+
         kdpContent += generateKDPFooter()
-        
-        return kdpContent.data(using: .utf8) ?? Data()
+
+        guard let data = kdpContent.data(using: .utf8) else {
+            Logger.error("Failed to encode KDP content as UTF-8", error: ConversionError.parsingFailed, category: .conversion)
+            throw ConversionError.parsingFailed
+        }
+
+        Logger.debug("Generated KDP HTML with \(kdpContent.count) characters", category: .conversion)
+        return data
     }
     
-    func convertFromKDP(data: Data) throws -> EbookDocument {
+    /// Asynchronously converts KDP format data to EbookDocument
+    /// - Parameter data: KDP-formatted data
+    /// - Returns: Parsed EbookDocument
+    /// - Throws: ConversionError if parsing fails
+    func convertFromKDP(data: Data) async throws -> EbookDocument {
+        return try await withCheckedThrowingContinuation { continuation in
+            Task {
+                do {
+                    let document = try convertFromKDPSync(data: data)
+                    continuation.resume(returning: document)
+                } catch {
+                    continuation.resume(throwing: error)
+                }
+            }
+        }
+    }
+
+    private func convertFromKDPSync(data: Data) throws -> EbookDocument {
         // Implementation for converting from .kdp format to EbookDocument
         guard let content = String(data: data, encoding: .utf8) else {
             throw ConversionError.invalidData
         }
-        
+
         let document = EbookDocument()
         document.chapters = parseKDPChapters(from: content)
         document.metadata = parseKDPMetadata(from: content)
-        
+
         return document
     }
     
@@ -104,15 +161,27 @@ class KDPConverter {
     
     private func parseKDPMetadata(from content: String) -> BookMetadata {
         var metadata = BookMetadata()
-        
+
         // Parse metadata from KDP content
         if let titleMatch = content.range(of: #"<title>(.*?)</title>"#, options: .regularExpression) {
             metadata.title = String(content[titleMatch])
                 .replacingOccurrences(of: "<title>", with: "")
                 .replacingOccurrences(of: "</title>", with: "")
         }
-        
+
         return metadata
+    }
+
+    // MARK: - Converter Protocol
+
+    func convert(from source: EbookFormat, completion: @escaping (Bool) -> Void) {
+        // This is a simplified conversion that would need a document parameter in a real implementation
+        // For now, just simulate conversion success
+        DispatchQueue.global(qos: .userInitiated).async {
+            // Simulate conversion work
+            Thread.sleep(forTimeInterval: 0.5)
+            completion(true)
+        }
     }
 }
 

@@ -3,26 +3,170 @@ import Foundation
 
 /// Beautiful theme selection interface showcasing color psychology benefits
 class ThemeSelectorViewController: NSViewController {
-    
-    @IBOutlet weak var scrollView: NSScrollView!
-    @IBOutlet weak var themeGridView: NSView!
-    @IBOutlet weak var recommendationView: NSView!
-    @IBOutlet weak var writingTypePopup: NSPopUpButton!
-    @IBOutlet weak var timeBasedButton: NSButton!
-    @IBOutlet weak var previewTextView: NSTextView!
-    @IBOutlet weak var psychologyLabel: NSTextField!
-    @IBOutlet weak var benefitsLabel: NSTextField!
-    
+
+    // UI Elements - created programmatically
+    private var scrollView: NSScrollView!
+    private var themeGridView: NSView!
+    private var recommendationView: NSView!
+    private var writingTypePopup: NSPopUpButton!
+    private var timeBasedButton: NSButton!
+    private var previewTextView: NSTextView!
+    private var psychologyLabel: NSTextField!
+    private var benefitsLabel: NSTextField!
+
     private let themeManager = ColorThemeManager.shared
     private var themeCards: [ThemeCardView] = []
     private var selectedTheme: ColorThemeManager.WritingTheme = .focused
-    
+    private var timeBasedUpdateTimer: Timer?
+
+    override func loadView() {
+        // Create the main view
+        self.view = NSView(frame: NSRect(x: 0, y: 0, width: 900, height: 700))
+        createUI()
+    }
+
     override func viewDidLoad() {
         super.viewDidLoad()
         setupThemeGrid()
         setupRecommendations()
         setupPreview()
         updateThemeSelection()
+    }
+
+    private func createUI() {
+        // Title
+        let titleLabel = NSTextField(labelWithString: "Choose Your Writing Theme")
+        titleLabel.font = NSFont.boldSystemFont(ofSize: 20)
+        titleLabel.alignment = .center
+        titleLabel.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(titleLabel)
+
+        // Recommendation view
+        recommendationView = NSView(frame: .zero)
+        recommendationView.wantsLayer = true
+        recommendationView.layer?.backgroundColor = NSColor.controlBackgroundColor.cgColor
+        recommendationView.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(recommendationView)
+
+        // Writing type label
+        let typeLabel = NSTextField(labelWithString: "Writing Type:")
+        typeLabel.isEditable = false
+        typeLabel.isBordered = false
+        typeLabel.backgroundColor = .clear
+        typeLabel.translatesAutoresizingMaskIntoConstraints = false
+        recommendationView.addSubview(typeLabel)
+
+        // Writing type popup
+        writingTypePopup = NSPopUpButton(frame: .zero, pullsDown: false)
+        writingTypePopup.translatesAutoresizingMaskIntoConstraints = false
+        recommendationView.addSubview(writingTypePopup)
+
+        // Time-based button
+        timeBasedButton = NSButton(title: "Use Time-Based Theme", target: nil, action: nil)
+        timeBasedButton.bezelStyle = .rounded
+        timeBasedButton.translatesAutoresizingMaskIntoConstraints = false
+        recommendationView.addSubview(timeBasedButton)
+
+        // Scroll view for theme grid
+        scrollView = NSScrollView(frame: .zero)
+        scrollView.hasVerticalScroller = true
+        scrollView.hasHorizontalScroller = false
+        scrollView.autohidesScrollers = true
+        scrollView.borderType = .bezelBorder
+        scrollView.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(scrollView)
+
+        // Theme grid view
+        themeGridView = NSView(frame: .zero)
+        scrollView.documentView = themeGridView
+
+        // Preview section
+        let previewContainer = NSView(frame: .zero)
+        previewContainer.wantsLayer = true
+        previewContainer.layer?.backgroundColor = NSColor.controlBackgroundColor.cgColor
+        previewContainer.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(previewContainer)
+
+        let previewTitle = NSTextField(labelWithString: "Preview")
+        previewTitle.font = NSFont.boldSystemFont(ofSize: 14)
+        previewTitle.isEditable = false
+        previewTitle.isBordered = false
+        previewTitle.backgroundColor = .clear
+        previewTitle.translatesAutoresizingMaskIntoConstraints = false
+        previewContainer.addSubview(previewTitle)
+
+        // Preview text view
+        let previewScrollView = NSScrollView(frame: .zero)
+        previewScrollView.hasVerticalScroller = true
+        previewScrollView.borderType = .bezelBorder
+        previewScrollView.translatesAutoresizingMaskIntoConstraints = false
+        previewContainer.addSubview(previewScrollView)
+
+        previewTextView = NSTextView(frame: .zero)
+        previewTextView.isEditable = false
+        previewScrollView.documentView = previewTextView
+
+        // Psychology labels
+        psychologyLabel = NSTextField(labelWithString: "Select a theme to see its benefits")
+        psychologyLabel.isEditable = false
+        psychologyLabel.isBordered = false
+        psychologyLabel.backgroundColor = .clear
+        psychologyLabel.translatesAutoresizingMaskIntoConstraints = false
+        previewContainer.addSubview(psychologyLabel)
+
+        benefitsLabel = NSTextField(labelWithString: "")
+        benefitsLabel.isEditable = false
+        benefitsLabel.isBordered = false
+        benefitsLabel.backgroundColor = .clear
+        benefitsLabel.translatesAutoresizingMaskIntoConstraints = false
+        previewContainer.addSubview(benefitsLabel)
+
+        // Set up constraints
+        NSLayoutConstraint.activate([
+            titleLabel.topAnchor.constraint(equalTo: view.topAnchor, constant: 20),
+            titleLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+
+            recommendationView.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 15),
+            recommendationView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
+            recommendationView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
+            recommendationView.heightAnchor.constraint(equalToConstant: 60),
+
+            typeLabel.leadingAnchor.constraint(equalTo: recommendationView.leadingAnchor, constant: 10),
+            typeLabel.centerYAnchor.constraint(equalTo: recommendationView.centerYAnchor),
+
+            writingTypePopup.leadingAnchor.constraint(equalTo: typeLabel.trailingAnchor, constant: 10),
+            writingTypePopup.centerYAnchor.constraint(equalTo: recommendationView.centerYAnchor),
+            writingTypePopup.widthAnchor.constraint(equalToConstant: 180),
+
+            timeBasedButton.trailingAnchor.constraint(equalTo: recommendationView.trailingAnchor, constant: -10),
+            timeBasedButton.centerYAnchor.constraint(equalTo: recommendationView.centerYAnchor),
+
+            scrollView.topAnchor.constraint(equalTo: recommendationView.bottomAnchor, constant: 15),
+            scrollView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
+            scrollView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
+            scrollView.heightAnchor.constraint(equalToConstant: 350),
+
+            previewContainer.topAnchor.constraint(equalTo: scrollView.bottomAnchor, constant: 15),
+            previewContainer.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
+            previewContainer.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
+            previewContainer.bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: -20),
+
+            previewTitle.topAnchor.constraint(equalTo: previewContainer.topAnchor, constant: 10),
+            previewTitle.leadingAnchor.constraint(equalTo: previewContainer.leadingAnchor, constant: 10),
+
+            previewScrollView.topAnchor.constraint(equalTo: previewTitle.bottomAnchor, constant: 5),
+            previewScrollView.leadingAnchor.constraint(equalTo: previewContainer.leadingAnchor, constant: 10),
+            previewScrollView.trailingAnchor.constraint(equalTo: previewContainer.trailingAnchor, constant: -10),
+            previewScrollView.heightAnchor.constraint(equalToConstant: 120),
+
+            psychologyLabel.topAnchor.constraint(equalTo: previewScrollView.bottomAnchor, constant: 10),
+            psychologyLabel.leadingAnchor.constraint(equalTo: previewContainer.leadingAnchor, constant: 10),
+            psychologyLabel.trailingAnchor.constraint(equalTo: previewContainer.trailingAnchor, constant: -10),
+
+            benefitsLabel.topAnchor.constraint(equalTo: psychologyLabel.bottomAnchor, constant: 5),
+            benefitsLabel.leadingAnchor.constraint(equalTo: previewContainer.leadingAnchor, constant: 10),
+            benefitsLabel.trailingAnchor.constraint(equalTo: previewContainer.trailingAnchor, constant: -10)
+        ])
     }
     
     // MARK: - Theme Grid Setup
@@ -85,7 +229,7 @@ class ThemeSelectorViewController: NSViewController {
         updateTimeBasedButton()
         
         // Auto-update time-based recommendations every minute
-        Timer.scheduledTimer(withTimeInterval: 60.0, repeats: true) { [weak self] _ in
+        timeBasedUpdateTimer = Timer.scheduledTimer(withTimeInterval: 60.0, repeats: true) { [weak self] _ in
             self?.updateTimeBasedButton()
         }
     }
@@ -247,6 +391,11 @@ class ThemeSelectorViewController: NSViewController {
         alert.addButton(withTitle: "Great!")
         alert.alertStyle = .informational
         alert.runModal()
+    }
+
+    deinit {
+        timeBasedUpdateTimer?.invalidate()
+        timeBasedUpdateTimer = nil
     }
 }
 

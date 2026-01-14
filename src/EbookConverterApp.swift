@@ -253,23 +253,41 @@ class AvantGardeApp: NSApplication {
         openPanel.message = "Choose an Avant Garde document to open"
 
         openPanel.begin { response in
-            guard response == .OK, let url = openPanel.url else { return }
+            guard response == .OK, let url = openPanel.url else {
+                Logger.debug("Open document cancelled by user", category: .editor)
+                return
+            }
+
+            Logger.info("Opening document: \(url.lastPathComponent)", category: .editor)
 
             do {
                 let data = try Data(contentsOf: url)
                 let document = EbookDocument()
                 try document.read(from: data, ofType: "AvantGardeDocument")
 
+                Logger.info("Document '\(document.metadata.title)' opened successfully with \(document.chapters.count) chapters", category: .editor)
+
                 let windowController = EditorWindowController(document: document)
                 document.addWindowController(windowController)
                 windowController.showWindow(nil)
             } catch {
-                let alert = NSAlert()
-                alert.messageText = "Failed to Open Document"
-                alert.informativeText = "Could not open the selected document: \(error.localizedDescription)"
-                alert.alertStyle = .critical
-                alert.addButton(withTitle: "OK")
-                alert.runModal()
+                let recovery = ErrorRecovery.recoverFromDocumentError(error, operation: "open")
+
+                switch recovery {
+                case .showAlert(let title, let message, let options):
+                    let alert = NSAlert()
+                    alert.messageText = title
+                    alert.informativeText = message
+                    alert.alertStyle = .critical
+
+                    for option in options {
+                        alert.addButton(withTitle: option)
+                    }
+
+                    alert.runModal()
+                default:
+                    break
+                }
             }
         }
     }
@@ -309,10 +327,14 @@ class AvantGardeApp: NSApplication {
     }
 
     private func saveDocument(_ document: EbookDocument, to url: URL) {
+        Logger.info("Saving document '\(document.metadata.title)' to: \(url.lastPathComponent)", category: .editor)
+
         do {
             let data = try document.data(ofType: "AvantGardeDocument")
             try data.write(to: url)
             document.fileURL = url
+
+            Logger.info("Document saved successfully. Size: \(data.count) bytes", category: .editor)
 
             let alert = NSAlert()
             alert.messageText = "Document Saved"
@@ -321,12 +343,27 @@ class AvantGardeApp: NSApplication {
             alert.addButton(withTitle: "OK")
             alert.runModal()
         } catch {
-            let alert = NSAlert()
-            alert.messageText = "Save Failed"
-            alert.informativeText = "Could not save the document: \(error.localizedDescription)"
-            alert.alertStyle = .critical
-            alert.addButton(withTitle: "OK")
-            alert.runModal()
+            let recovery = ErrorRecovery.recoverFromDocumentError(error, operation: "save")
+
+            switch recovery {
+            case .showAlert(let title, let message, let options):
+                let alert = NSAlert()
+                alert.messageText = title
+                alert.informativeText = message
+                alert.alertStyle = .critical
+
+                for option in options {
+                    alert.addButton(withTitle: option)
+                }
+
+                let response = alert.runModal()
+                if response == .alertFirstButtonReturn && options.first == "Try Again" {
+                    // Retry save
+                    saveDocument(document, to: url)
+                }
+            default:
+                break
+            }
         }
     }
 
@@ -352,26 +389,51 @@ class AvantGardeApp: NSApplication {
         savePanel.nameFieldStringValue = document.metadata.title.isEmpty ? "book.html" : "\(document.metadata.title).html"
         savePanel.message = "Export to KDP HTML format"
 
-        savePanel.begin { response in
-            guard response == .OK, let url = savePanel.url else { return }
+        savePanel.begin { [weak self] response in
+            guard response == .OK, let url = savePanel.url else {
+                Logger.debug("KDP export cancelled by user", category: .conversion)
+                return
+            }
 
-            do {
-                let kdpData = try document.exportToKDP()
-                try kdpData.write(to: url)
+            Logger.info("Starting KDP export to: \(url.lastPathComponent)", category: .conversion)
 
-                let alert = NSAlert()
-                alert.messageText = "KDP Export Successful"
-                alert.informativeText = "Your book has been exported to KDP HTML format. You can now upload it to Amazon KDP."
-                alert.alertStyle = .informational
-                alert.addButton(withTitle: "OK")
-                alert.runModal()
-            } catch {
-                let alert = NSAlert()
-                alert.messageText = "Export Failed"
-                alert.informativeText = "Could not export to KDP format: \(error.localizedDescription)"
-                alert.alertStyle = .critical
-                alert.addButton(withTitle: "OK")
-                alert.runModal()
+            Task { @MainActor in
+                do {
+                    let kdpData = try await document.exportToKDP()
+                    try kdpData.write(to: url)
+
+                    Logger.info("KDP export saved successfully to: \(url.path)", category: .conversion)
+
+                    let alert = NSAlert()
+                    alert.messageText = "KDP Export Successful"
+                    alert.informativeText = "Your book has been exported to KDP HTML format. You can now upload it to Amazon KDP."
+                    alert.alertStyle = .informational
+                    alert.addButton(withTitle: "OK")
+                    alert.runModal()
+                } catch {
+                    // Use error recovery system
+                    let recovery = ErrorRecovery.recoverFromConversionError(error, documentTitle: document.metadata.title)
+
+                    switch recovery {
+                    case .showAlert(let title, let message, let options):
+                        let alert = NSAlert()
+                        alert.messageText = title
+                        alert.informativeText = message
+                        alert.alertStyle = .critical
+
+                        for option in options {
+                            alert.addButton(withTitle: option)
+                        }
+
+                        let response = alert.runModal()
+                        if response == .alertFirstButtonReturn && options.first == "Try Again" {
+                            // Retry export
+                            self?.exportToKDP()
+                        }
+                    default:
+                        break
+                    }
+                }
             }
         }
     }
@@ -389,26 +451,51 @@ class AvantGardeApp: NSApplication {
         savePanel.nameFieldStringValue = document.metadata.title.isEmpty ? "book.epub" : "\(document.metadata.title).epub"
         savePanel.message = "Export to Google Play Books EPUB format"
 
-        savePanel.begin { response in
-            guard response == .OK, let url = savePanel.url else { return }
+        savePanel.begin { [weak self] response in
+            guard response == .OK, let url = savePanel.url else {
+                Logger.debug("Google Play export cancelled by user", category: .conversion)
+                return
+            }
 
-            do {
-                let googleData = try document.exportToGoogle()
-                try googleData.write(to: url)
+            Logger.info("Starting Google Play export to: \(url.lastPathComponent)", category: .conversion)
 
-                let alert = NSAlert()
-                alert.messageText = "Google Play Export Successful"
-                alert.informativeText = "Your book has been exported to EPUB format. You can now upload it to Google Play Books."
-                alert.alertStyle = .informational
-                alert.addButton(withTitle: "OK")
-                alert.runModal()
-            } catch {
-                let alert = NSAlert()
-                alert.messageText = "Export Failed"
-                alert.informativeText = "Could not export to Google Play format: \(error.localizedDescription)"
-                alert.alertStyle = .critical
-                alert.addButton(withTitle: "OK")
-                alert.runModal()
+            Task { @MainActor in
+                do {
+                    let googleData = try await document.exportToGoogle()
+                    try googleData.write(to: url)
+
+                    Logger.info("Google Play export saved successfully to: \(url.path)", category: .conversion)
+
+                    let alert = NSAlert()
+                    alert.messageText = "Google Play Export Successful"
+                    alert.informativeText = "Your book has been exported to EPUB format. You can now upload it to Google Play Books."
+                    alert.alertStyle = .informational
+                    alert.addButton(withTitle: "OK")
+                    alert.runModal()
+                } catch {
+                    // Use error recovery system
+                    let recovery = ErrorRecovery.recoverFromConversionError(error, documentTitle: document.metadata.title)
+
+                    switch recovery {
+                    case .showAlert(let title, let message, let options):
+                        let alert = NSAlert()
+                        alert.messageText = title
+                        alert.informativeText = message
+                        alert.alertStyle = .critical
+
+                        for option in options {
+                            alert.addButton(withTitle: option)
+                        }
+
+                        let response = alert.runModal()
+                        if response == .alertFirstButtonReturn && options.first == "Try Again" {
+                            // Retry export
+                            self?.exportToGoogle()
+                        }
+                    default:
+                        break
+                    }
+                }
             }
         }
     }
@@ -547,6 +634,6 @@ class AvantGardeApp: NSApplication {
 
 // If running as a standalone app
 if ProcessInfo.processInfo.arguments.contains("--demo") {
-    let app = EbookConverterApp.shared
+    let app = AvantGardeApp.shared
     app.run()
 }

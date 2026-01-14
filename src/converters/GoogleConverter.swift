@@ -1,20 +1,72 @@
 import Foundation
 
-class GoogleConverter {
-    func convertToGoogle(document: EbookDocument) throws -> Data {
+class GoogleConverter: Converter {
+
+    // MARK: - Async/Await API
+
+    /// Asynchronously converts an EbookDocument to Google Play Books format (EPUB)
+    /// - Parameter document: The document to convert
+    /// - Returns: EPUB-formatted data
+    /// - Throws: ConversionError if conversion fails
+    func convertToGoogle(document: EbookDocument) async throws -> Data {
+        Logger.info("Starting Google Play Books EPUB conversion for: \(document.metadata.title)", category: .conversion)
+
+        return try await withCheckedThrowingContinuation { continuation in
+            Task {
+                do {
+                    let data = try convertToGoogleSync(document: document)
+                    Logger.info("Google EPUB conversion completed successfully. Size: \(data.count) bytes", category: .conversion)
+                    continuation.resume(returning: data)
+                } catch {
+                    Logger.error("Google EPUB conversion failed", error: error, category: .conversion)
+                    continuation.resume(throwing: error)
+                }
+            }
+        }
+    }
+
+    /// Asynchronously converts Google/EPUB format data to EbookDocument
+    /// - Parameter data: EPUB-formatted data
+    /// - Returns: Parsed EbookDocument
+    /// - Throws: ConversionError if parsing fails
+    func convertFromGoogle(data: Data) async throws -> EbookDocument {
+        return try await withCheckedThrowingContinuation { continuation in
+            Task {
+                do {
+                    let document = try convertFromGoogleSync(data: data)
+                    continuation.resume(returning: document)
+                } catch {
+                    continuation.resume(throwing: error)
+                }
+            }
+        }
+    }
+
+    // MARK: - Synchronous Implementation
+
+    private func convertToGoogleSync(document: EbookDocument) throws -> Data {
         // Implementation for converting EbookDocument to Google Play Books format (EPUB)
         let formattingEngine = FormattingEngine()
-        
+
+        Logger.debug("Optimizing document for Google Play Books format", category: .conversion)
+
         // Optimize formatting for Google Play Books
         let optimizedDocument = optimizeDocumentForGoogle(document)
-        
+
         // Generate EPUB content for Google Play Books
+        Logger.debug("Generating EPUB with \(optimizedDocument.chapters.count) chapters", category: .conversion)
         let epubContent = generateGoogleEPUB(optimizedDocument)
-        
-        return epubContent.data(using: .utf8) ?? Data()
+
+        guard let data = epubContent.data(using: .utf8), !data.isEmpty else {
+            Logger.error("Failed to generate EPUB data", error: ConversionError.parsingFailed, category: .conversion)
+            throw ConversionError.parsingFailed
+        }
+
+        Logger.debug("Generated EPUB with \(epubContent.count) characters", category: .conversion)
+        return data
     }
-    
-    func convertFromGoogle(data: Data) throws -> EbookDocument {
+
+    private func convertFromGoogleSync(data: Data) throws -> EbookDocument {
         // Implementation for converting from Google format to EbookDocument
         guard let content = String(data: data, encoding: .utf8) else {
             throw ConversionError.invalidData
@@ -197,8 +249,20 @@ class GoogleConverter {
         // - Maximum file size: 127MB for entire EPUB
         // - Recommended image resolution: 1600x2400 for covers
         // - Supported formats: JPEG, PNG, GIF, SVG
-        
+
         // This would implement actual image optimization
         return imagePaths
+    }
+
+    // MARK: - Converter Protocol
+
+    func convert(from source: EbookFormat, completion: @escaping (Bool) -> Void) {
+        // This is a simplified conversion that would need a document parameter in a real implementation
+        // For now, just simulate conversion success
+        DispatchQueue.global(qos: .userInitiated).async {
+            // Simulate conversion work
+            Thread.sleep(forTimeInterval: 0.5)
+            completion(true)
+        }
     }
 }

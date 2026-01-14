@@ -2,7 +2,14 @@ import AppKit
 import Foundation
 
 class EditorWindowController: NSWindowController {
-    
+
+    // References to UI elements
+    private var mainTextView: NSTextView?
+    private var chapterTableView: NSTableView?
+    private var wordCountLabel: NSTextField?
+    private var charCountLabel: NSTextField?
+    private var readTimeLabel: NSTextField?
+
     override func windowDidLoad() {
         super.windowDidLoad()
         setupWindow()
@@ -76,6 +83,9 @@ class EditorWindowController: NSWindowController {
         tableView.addTableColumn(column)
         tableView.headerView = nil
         scrollView.documentView = tableView
+
+        // Store reference
+        self.chapterTableView = tableView
         
         // Add chapter button
         let addButton = NSButton(title: "Add Chapter", target: nil, action: #selector(addChapter))
@@ -124,14 +134,19 @@ class EditorWindowController: NSWindowController {
         let wordCountLabel = NSTextField(labelWithString: "Words: 0")
         wordCountLabel.font = NSFont.systemFont(ofSize: 12)
         wordCountLabel.translatesAutoresizingMaskIntoConstraints = false
-        
+
         let charCountLabel = NSTextField(labelWithString: "Characters: 0")
         charCountLabel.font = NSFont.systemFont(ofSize: 12)
         charCountLabel.translatesAutoresizingMaskIntoConstraints = false
-        
+
         let readTimeLabel = NSTextField(labelWithString: "Est. Reading: 0 min")
         readTimeLabel.font = NSFont.systemFont(ofSize: 12)
         readTimeLabel.translatesAutoresizingMaskIntoConstraints = false
+
+        // Store references
+        self.wordCountLabel = wordCountLabel
+        self.charCountLabel = charCountLabel
+        self.readTimeLabel = readTimeLabel
         
         statsContainer.addSubview(statsLabel)
         statsContainer.addSubview(wordCountLabel)
@@ -300,9 +315,12 @@ class EditorWindowController: NSWindowController {
         
         // Add margins for better readability
         textView.textContainerInset = NSSize(width: 24, height: 24)
-        
+
         scrollView.documentView = textView
-        
+
+        // Store reference
+        self.mainTextView = textView
+
         return scrollView
     }
     
@@ -347,59 +365,235 @@ class EditorWindowController: NSWindowController {
     // MARK: - Action Methods
     
     @objc private func addChapter() {
-        // Add new chapter logic
+        guard let document = self.document as? EbookDocument else { return }
+
+        let newChapter = Chapter(title: "Chapter \(document.chapters.count + 1)", content: "")
+        document.chapters.append(newChapter)
+
+        chapterTableView?.reloadData()
+        updateStatistics()
     }
-    
+
     @objc private func makeBold() {
-        // Bold formatting logic
+        guard let textView = mainTextView,
+              let textStorage = textView.textStorage else { return }
+
+        let range = textView.selectedRange()
+        guard range.length > 0 else { return }
+
+        // Get current attributes
+        let currentAttributes = textStorage.attributes(at: range.location, effectiveRange: nil)
+        let currentFont = currentAttributes[.font] as? NSFont ?? NSFont.systemFont(ofSize: 14)
+
+        // Toggle bold trait
+        let fontManager = NSFontManager.shared
+        let newFont: NSFont
+
+        if fontManager.traits(of: currentFont).contains(.boldFontMask) {
+            // Remove bold
+            newFont = fontManager.convert(currentFont, toNotHaveTrait: .boldFontMask)
+        } else {
+            // Add bold
+            newFont = fontManager.convert(currentFont, toHaveTrait: .boldFontMask)
+        }
+
+        textStorage.addAttribute(.font, value: newFont, range: range)
     }
-    
+
     @objc private func makeItalic() {
-        // Italic formatting logic
+        guard let textView = mainTextView,
+              let textStorage = textView.textStorage else { return }
+
+        let range = textView.selectedRange()
+        guard range.length > 0 else { return }
+
+        // Get current attributes
+        let currentAttributes = textStorage.attributes(at: range.location, effectiveRange: nil)
+        let currentFont = currentAttributes[.font] as? NSFont ?? NSFont.systemFont(ofSize: 14)
+
+        // Toggle italic trait
+        let fontManager = NSFontManager.shared
+        let newFont: NSFont
+
+        if fontManager.traits(of: currentFont).contains(.italicFontMask) {
+            // Remove italic
+            newFont = fontManager.convert(currentFont, toNotHaveTrait: .italicFontMask)
+        } else {
+            // Add italic
+            newFont = fontManager.convert(currentFont, toHaveTrait: .italicFontMask)
+        }
+
+        textStorage.addAttribute(.font, value: newFont, range: range)
     }
-    
+
     @objc private func makeUnderline() {
-        // Underline formatting logic
+        guard let textView = mainTextView,
+              let textStorage = textView.textStorage else { return }
+
+        let range = textView.selectedRange()
+        guard range.length > 0 else { return }
+
+        // Get current underline style
+        let currentAttributes = textStorage.attributes(at: range.location, effectiveRange: nil)
+        let currentUnderline = currentAttributes[.underlineStyle] as? Int ?? 0
+
+        // Toggle underline
+        if currentUnderline > 0 {
+            // Remove underline
+            textStorage.removeAttribute(.underlineStyle, range: range)
+        } else {
+            // Add underline
+            textStorage.addAttribute(.underlineStyle, value: NSUnderlineStyle.single.rawValue, range: range)
+        }
     }
     
     @objc private func alignLeft() {
-        // Left alignment logic
+        applyAlignment(.left)
     }
-    
+
     @objc private func alignCenter() {
-        // Center alignment logic
+        applyAlignment(.center)
     }
-    
+
     @objc private func alignRight() {
-        // Right alignment logic
+        applyAlignment(.right)
+    }
+
+    private func applyAlignment(_ alignment: NSTextAlignment) {
+        guard let textView = mainTextView,
+              let textStorage = textView.textStorage else { return }
+
+        let range = textView.selectedRange()
+
+        // Get paragraph range
+        let paragraphRange = (textStorage.string as NSString).paragraphRange(for: range)
+
+        // Create paragraph style with desired alignment
+        let paragraphStyle = NSMutableParagraphStyle()
+        paragraphStyle.alignment = alignment
+
+        // Apply to the entire paragraph
+        textStorage.addAttribute(.paragraphStyle, value: paragraphStyle, range: paragraphRange)
     }
     
     @objc private func insertChapter() {
-        // Insert chapter break logic
+        guard let textView = mainTextView else { return }
+
+        let chapterBreak = "\n\n--- Chapter Break ---\n\n"
+        let range = textView.selectedRange()
+
+        textView.insertText(chapterBreak, replacementRange: range)
     }
-    
+
     @objc private func insertImage() {
-        // Insert image logic
+        guard let textView = mainTextView else { return }
+
+        let openPanel = NSOpenPanel()
+        openPanel.allowedContentTypes = [.image, .png, .jpeg, .gif]
+        openPanel.allowsMultipleSelection = false
+        openPanel.message = "Select an image to insert"
+
+        openPanel.begin { [weak self] response in
+            guard response == .OK, let url = openPanel.url else { return }
+
+            if let image = NSImage(contentsOf: url) {
+                let textAttachment = NSTextAttachment()
+                textAttachment.image = image
+
+                // Resize image to fit text width if needed
+                let maxWidth: CGFloat = 600
+                if image.size.width > maxWidth {
+                    let ratio = maxWidth / image.size.width
+                    let newSize = NSSize(width: maxWidth, height: image.size.height * ratio)
+                    textAttachment.image = image.resized(to: newSize)
+                }
+
+                let attributedString = NSAttributedString(attachment: textAttachment)
+                textView.insertText(attributedString, replacementRange: textView.selectedRange())
+            }
+        }
     }
-    
+
     @objc private func insertFootnote() {
-        // Insert footnote logic
+        guard let textView = mainTextView else { return }
+
+        let footnoteText = "[Footnote: ]"
+        let range = textView.selectedRange()
+
+        textView.insertText(footnoteText, replacementRange: range)
+
+        // Move cursor inside the brackets
+        let newLocation = range.location + footnoteText.count - 1
+        textView.setSelectedRange(NSRange(location: newLocation, length: 0))
     }
     
     @objc private func validateKDP() {
-        // KDP validation logic
+        guard let document = self.document as? EbookDocument,
+              let textView = mainTextView else { return }
+
+        let formattingEngine = FormattingEngine()
+        let attributedText = textView.attributedString()
+
+        let errors = formattingEngine.validateForPlatform(.kdp, text: attributedText)
+
+        showValidationResults(platform: "Amazon KDP", errors: errors)
     }
-    
+
     @objc private func validateGoogle() {
-        // Google validation logic
+        guard let document = self.document as? EbookDocument,
+              let textView = mainTextView else { return }
+
+        let formattingEngine = FormattingEngine()
+        let attributedText = textView.attributedString()
+
+        let errors = formattingEngine.validateForPlatform(.google, text: attributedText)
+
+        showValidationResults(platform: "Google Play Books", errors: errors)
     }
-    
+
+    private func showValidationResults(platform: String, errors: [ValidationError]) {
+        let alert = NSAlert()
+
+        if errors.isEmpty {
+            alert.messageText = "\(platform) Validation Passed"
+            alert.informativeText = "Your document meets all \(platform) formatting requirements."
+            alert.alertStyle = .informational
+        } else {
+            alert.messageText = "\(platform) Validation Issues"
+            let errorMessages = errors.map { "• \($0.message)" }.joined(separator: "\n")
+            alert.informativeText = "Found \(errors.count) issue(s):\n\n\(errorMessages)"
+            alert.alertStyle = .warning
+        }
+
+        alert.addButton(withTitle: "OK")
+        alert.runModal()
+    }
+
     @objc private func playAudio() {
-        // Audio playback logic
+        guard let textView = mainTextView else { return }
+
+        let textToRead = textView.string.isEmpty ? "No text to read." : textView.string
+
+        let textToSpeech = TextToSpeech()
+        textToSpeech.speak(text: textToRead)
+
+        // Show feedback
+        let alert = NSAlert()
+        alert.messageText = "Reading Text"
+        alert.informativeText = "Text-to-speech playback has started."
+        alert.alertStyle = .informational
+        alert.addButton(withTitle: "OK")
+        alert.runModal()
     }
-    
+
     @objc private func voiceSettings() {
-        // Voice settings window logic
+        let voiceSettingsVC = VoiceSettingsViewController()
+
+        let window = NSWindow(contentViewController: voiceSettingsVC)
+        window.title = "Voice Settings"
+        window.setContentSize(NSSize(width: 600, height: 500))
+        window.center()
+        window.makeKeyAndOrderFront(nil)
     }
 
     // MARK: - Toggle Methods
@@ -441,6 +635,22 @@ class EditorWindowController: NSWindowController {
         alert.runModal()
     }
 
+    // MARK: - Helper Methods
+
+    private func updateStatistics() {
+        guard let document = self.document as? EbookDocument else { return }
+
+        let wordCount = document.getWordCount()
+        let charCount = document.getCharacterCount()
+        let readingTime = document.getEstimatedReadingTime()
+
+        let minutes = Int(readingTime / 60)
+
+        wordCountLabel?.stringValue = "Words: \(wordCount)"
+        charCountLabel?.stringValue = "Characters: \(charCount)"
+        readTimeLabel?.stringValue = "Est. Reading: \(minutes) min"
+    }
+
     // MARK: - Document Management
 
     convenience init(document: EbookDocument) {
@@ -458,5 +668,23 @@ class EditorWindowController: NSWindowController {
 extension NSFont {
     func italic() -> NSFont {
         return NSFontManager.shared.convert(self, toHaveTrait: .italicFontMask)
+    }
+}
+
+extension NSImage {
+    func resized(to newSize: NSSize) -> NSImage {
+        let newImage = NSImage(size: newSize)
+        newImage.lockFocus()
+        defer { newImage.unlockFocus() }
+
+        let context = NSGraphicsContext.current
+        context?.imageInterpolation = .high
+
+        self.draw(in: NSRect(origin: .zero, size: newSize),
+                  from: NSRect(origin: .zero, size: self.size),
+                  operation: .copy,
+                  fraction: 1.0)
+
+        return newImage
     }
 }

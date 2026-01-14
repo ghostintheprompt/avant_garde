@@ -26,22 +26,31 @@ class AudioController: NSObject {
         super.init()
         textToSpeech.delegate = self
     }
-    
+
+    deinit {
+        stopPlaybackTimer()
+        audioPlayer?.stop()
+        textToSpeech.stopSpeaking()
+    }
+
     // MARK: - Audio File Playback
     
     func playAudio(from url: URL) {
+        Logger.info("Starting audio playback from: \(url.lastPathComponent)", category: .audio)
+
         do {
             audioPlayer = try AVAudioPlayer(contentsOf: url)
             audioPlayer?.delegate = self
             audioPlayer?.prepareToPlay()
             audioPlayer?.play()
-            
+
             isPlayingAudio = true
             startPlaybackTimer()
             delegate?.audioDidStart()
+            Logger.debug("Audio playback started successfully", category: .audio)
         } catch {
+            Logger.error("Audio playback failed", error: error, category: .audio)
             delegate?.audioError(error)
-            print("Error playing audio: \(error.localizedDescription)")
         }
     }
     
@@ -85,21 +94,27 @@ class AudioController: NSObject {
     // MARK: - Text-to-Speech
     
     func readTextAloud(_ text: String) {
+        Logger.info("Starting text-to-speech for \(text.count) characters", category: .audio)
         textToSpeech.speak(text: text)
         isReadingText = true
     }
-    
+
     func readChapter(_ chapter: Chapter) {
+        Logger.info("Reading chapter: \(chapter.title)", category: .audio)
         textToSpeech.speakChapter(chapter)
         isReadingText = true
     }
-    
+
     func readDocument(_ document: EbookDocument, startingFromChapter: Int = 0) {
+        Logger.info("Starting document reading: \(document.metadata.title) from chapter \(startingFromChapter + 1)", category: .audio)
         currentDocument = document
         currentChapterIndex = startingFromChapter
-        
-        guard currentChapterIndex < document.chapters.count else { return }
-        
+
+        guard currentChapterIndex < document.chapters.count else {
+            Logger.warning("Invalid chapter index: \(currentChapterIndex) for document with \(document.chapters.count) chapters", category: .audio)
+            return
+        }
+
         let chapter = document.chapters[currentChapterIndex]
         readChapter(chapter)
     }

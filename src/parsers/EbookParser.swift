@@ -10,6 +10,6 @@ class EbookParser {
     func getFormat(filePath: String) -> EbookFormat? {
         // Implementation for detecting the format of the eBook file
         // This is a placeholder for the actual format detection logic
-        return FormatDetector().detectFormat(filePath: filePath)
+        return try? FormatDetector().detectFormat(of: filePath)
     }
 }

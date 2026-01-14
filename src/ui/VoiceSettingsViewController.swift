@@ -2,30 +2,198 @@ import AppKit
 import AVFoundation
 
 class VoiceSettingsViewController: NSViewController {
-    
-    @IBOutlet weak var voiceTableView: NSTableView!
-    @IBOutlet weak var voicePreviewButton: NSButton!
-    @IBOutlet weak var speechRateSlider: NSSlider!
-    @IBOutlet weak var speechPitchSlider: NSSlider!
-    @IBOutlet weak var speechVolumeSlider: NSSlider!
-    @IBOutlet weak var rateLabel: NSTextField!
-    @IBOutlet weak var pitchLabel: NSTextField!
-    @IBOutlet weak var volumeLabel: NSTextField!
-    @IBOutlet weak var voiceQualitySegmentedControl: NSSegmentedControl!
-    @IBOutlet weak var languagePopUpButton: NSPopUpButton!
-    
+
+    // UI Elements - created programmatically
+    private var voiceTableView: NSTableView!
+    private var voicePreviewButton: NSButton!
+    private var speechRateSlider: NSSlider!
+    private var speechPitchSlider: NSSlider!
+    private var speechVolumeSlider: NSSlider!
+    private var rateLabel: NSTextField!
+    private var pitchLabel: NSTextField!
+    private var volumeLabel: NSTextField!
+    private var voiceQualitySegmentedControl: NSSegmentedControl!
+    private var languagePopUpButton: NSPopUpButton!
+
     private let textToSpeech = TextToSpeech()
     private var displayedVoices: [VoiceOption] = []
     private var selectedVoice: VoiceOption?
-    
+
     private let previewText = "Hello, this is a preview of how this voice will sound when reading your ebook. The voice quality and speech rate can be adjusted to your preference."
-    
+
+    override func loadView() {
+        // Create the main view
+        self.view = NSView(frame: NSRect(x: 0, y: 0, width: 600, height: 500))
+        createUI()
+    }
+
     override func viewDidLoad() {
         super.viewDidLoad()
         setupUI()
         loadVoices()
         setupTableView()
         textToSpeech.delegate = self
+    }
+
+    private func createUI() {
+        // Title
+        let titleLabel = NSTextField(labelWithString: "Voice Settings")
+        titleLabel.font = NSFont.boldSystemFont(ofSize: 18)
+        titleLabel.alignment = .center
+        titleLabel.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(titleLabel)
+
+        // Voice quality segmented control
+        voiceQualitySegmentedControl = NSSegmentedControl(frame: .zero)
+        voiceQualitySegmentedControl.segmentCount = 3
+        voiceQualitySegmentedControl.setLabel("All", forSegment: 0)
+        voiceQualitySegmentedControl.setLabel("Standard", forSegment: 1)
+        voiceQualitySegmentedControl.setLabel("Premium", forSegment: 2)
+        voiceQualitySegmentedControl.selectedSegment = 0
+        voiceQualitySegmentedControl.target = self
+        voiceQualitySegmentedControl.action = #selector(voiceQualityChanged(_:))
+        voiceQualitySegmentedControl.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(voiceQualitySegmentedControl)
+
+        // Language popup
+        languagePopUpButton = NSPopUpButton(frame: .zero, pullsDown: false)
+        languagePopUpButton.target = self
+        languagePopUpButton.action = #selector(languageChanged(_:))
+        languagePopUpButton.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(languagePopUpButton)
+
+        // Table view for voices
+        let scrollView = NSScrollView(frame: .zero)
+        scrollView.hasVerticalScroller = true
+        scrollView.hasHorizontalScroller = false
+        scrollView.autohidesScrollers = true
+        scrollView.borderType = .bezelBorder
+        scrollView.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(scrollView)
+
+        voiceTableView = NSTableView(frame: scrollView.bounds)
+        scrollView.documentView = voiceTableView
+
+        // Preview button
+        voicePreviewButton = NSButton(title: "Preview Voice", target: self, action: #selector(previewVoice(_:)))
+        voicePreviewButton.bezelStyle = .rounded
+        voicePreviewButton.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(voicePreviewButton)
+
+        // Speech rate controls
+        let rateTitle = NSTextField(labelWithString: "Speech Rate:")
+        rateTitle.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(rateTitle)
+
+        speechRateSlider = NSSlider(target: self, action: #selector(speechRateChanged(_:)))
+        speechRateSlider.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(speechRateSlider)
+
+        rateLabel = NSTextField(labelWithString: "0.50")
+        rateLabel.isEditable = false
+        rateLabel.isBordered = false
+        rateLabel.backgroundColor = .clear
+        rateLabel.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(rateLabel)
+
+        // Speech pitch controls
+        let pitchTitle = NSTextField(labelWithString: "Pitch:")
+        pitchTitle.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(pitchTitle)
+
+        speechPitchSlider = NSSlider(target: self, action: #selector(speechPitchChanged(_:)))
+        speechPitchSlider.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(speechPitchSlider)
+
+        pitchLabel = NSTextField(labelWithString: "1.00")
+        pitchLabel.isEditable = false
+        pitchLabel.isBordered = false
+        pitchLabel.backgroundColor = .clear
+        pitchLabel.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(pitchLabel)
+
+        // Speech volume controls
+        let volumeTitle = NSTextField(labelWithString: "Volume:")
+        volumeTitle.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(volumeTitle)
+
+        speechVolumeSlider = NSSlider(target: self, action: #selector(speechVolumeChanged(_:)))
+        speechVolumeSlider.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(speechVolumeSlider)
+
+        volumeLabel = NSTextField(labelWithString: "100%")
+        volumeLabel.isEditable = false
+        volumeLabel.isBordered = false
+        volumeLabel.backgroundColor = .clear
+        volumeLabel.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(volumeLabel)
+
+        // Reset button
+        let resetButton = NSButton(title: "Reset to Defaults", target: self, action: #selector(resetToDefaults(_:)))
+        resetButton.bezelStyle = .rounded
+        resetButton.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(resetButton)
+
+        // Set up constraints
+        NSLayoutConstraint.activate([
+            titleLabel.topAnchor.constraint(equalTo: view.topAnchor, constant: 20),
+            titleLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+
+            voiceQualitySegmentedControl.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 15),
+            voiceQualitySegmentedControl.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
+            voiceQualitySegmentedControl.widthAnchor.constraint(equalToConstant: 200),
+
+            languagePopUpButton.centerYAnchor.constraint(equalTo: voiceQualitySegmentedControl.centerYAnchor),
+            languagePopUpButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
+            languagePopUpButton.widthAnchor.constraint(equalToConstant: 200),
+
+            scrollView.topAnchor.constraint(equalTo: voiceQualitySegmentedControl.bottomAnchor, constant: 15),
+            scrollView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
+            scrollView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
+            scrollView.heightAnchor.constraint(equalToConstant: 150),
+
+            voicePreviewButton.topAnchor.constraint(equalTo: scrollView.bottomAnchor, constant: 10),
+            voicePreviewButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
+
+            rateTitle.topAnchor.constraint(equalTo: voicePreviewButton.bottomAnchor, constant: 20),
+            rateTitle.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
+            rateTitle.widthAnchor.constraint(equalToConstant: 100),
+
+            speechRateSlider.centerYAnchor.constraint(equalTo: rateTitle.centerYAnchor),
+            speechRateSlider.leadingAnchor.constraint(equalTo: rateTitle.trailingAnchor, constant: 10),
+            speechRateSlider.trailingAnchor.constraint(equalTo: rateLabel.leadingAnchor, constant: -10),
+
+            rateLabel.centerYAnchor.constraint(equalTo: rateTitle.centerYAnchor),
+            rateLabel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
+            rateLabel.widthAnchor.constraint(equalToConstant: 50),
+
+            pitchTitle.topAnchor.constraint(equalTo: rateTitle.bottomAnchor, constant: 15),
+            pitchTitle.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
+            pitchTitle.widthAnchor.constraint(equalToConstant: 100),
+
+            speechPitchSlider.centerYAnchor.constraint(equalTo: pitchTitle.centerYAnchor),
+            speechPitchSlider.leadingAnchor.constraint(equalTo: pitchTitle.trailingAnchor, constant: 10),
+            speechPitchSlider.trailingAnchor.constraint(equalTo: pitchLabel.leadingAnchor, constant: -10),
+
+            pitchLabel.centerYAnchor.constraint(equalTo: pitchTitle.centerYAnchor),
+            pitchLabel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
+            pitchLabel.widthAnchor.constraint(equalToConstant: 50),
+
+            volumeTitle.topAnchor.constraint(equalTo: pitchTitle.bottomAnchor, constant: 15),
+            volumeTitle.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
+            volumeTitle.widthAnchor.constraint(equalToConstant: 100),
+
+            speechVolumeSlider.centerYAnchor.constraint(equalTo: volumeTitle.centerYAnchor),
+            speechVolumeSlider.leadingAnchor.constraint(equalTo: volumeTitle.trailingAnchor, constant: 10),
+            speechVolumeSlider.trailingAnchor.constraint(equalTo: volumeLabel.leadingAnchor, constant: -10),
+
+            volumeLabel.centerYAnchor.constraint(equalTo: volumeTitle.centerYAnchor),
+            volumeLabel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
+            volumeLabel.widthAnchor.constraint(equalToConstant: 50),
+
+            resetButton.topAnchor.constraint(equalTo: volumeTitle.bottomAnchor, constant: 20),
+            resetButton.centerXAnchor.constraint(equalTo: view.centerXAnchor)
+        ])
     }
     
     private func setupUI() {
@@ -134,30 +302,30 @@ class VoiceSettingsViewController: NSViewController {
     
     // MARK: - Actions
     
-    @IBAction func voiceQualityChanged(_ sender: NSSegmentedControl) {
+    @objc func voiceQualityChanged(_ sender: NSSegmentedControl) {
         filterVoices()
     }
-    
-    @IBAction func languageChanged(_ sender: NSPopUpButton) {
+
+    @objc func languageChanged(_ sender: NSPopUpButton) {
         filterVoices()
     }
-    
-    @IBAction func speechRateChanged(_ sender: NSSlider) {
+
+    @objc func speechRateChanged(_ sender: NSSlider) {
         textToSpeech.setSpeechRate(Float(sender.doubleValue))
         updateSliderLabels()
     }
-    
-    @IBAction func speechPitchChanged(_ sender: NSSlider) {
+
+    @objc func speechPitchChanged(_ sender: NSSlider) {
         textToSpeech.setSpeechPitch(Float(sender.doubleValue))
         updateSliderLabels()
     }
-    
-    @IBAction func speechVolumeChanged(_ sender: NSSlider) {
+
+    @objc func speechVolumeChanged(_ sender: NSSlider) {
         textToSpeech.setSpeechVolume(Float(sender.doubleValue))
         updateSliderLabels()
     }
-    
-    @IBAction func previewVoice(_ sender: NSButton) {
+
+    @objc func previewVoice(_ sender: NSButton) {
         guard let voice = selectedVoice else {
             showAlert(message: "Please select a voice to preview")
             return
@@ -173,7 +341,7 @@ class VoiceSettingsViewController: NSViewController {
         }
     }
     
-    @IBAction func resetToDefaults(_ sender: NSButton) {
+    @objc func resetToDefaults(_ sender: NSButton) {
         speechRateSlider.doubleValue = 0.5
         speechPitchSlider.doubleValue = 1.0
         speechVolumeSlider.doubleValue = 1.0
@@ -194,7 +362,7 @@ class VoiceSettingsViewController: NSViewController {
         }
     }
     
-    @IBAction func showRecommendedVoices(_ sender: NSButton) {
+    @objc func showRecommendedVoices(_ sender: NSButton) {
         let recommended = textToSpeech.getRecommendedVoices()
         
         let alert = NSAlert()
@@ -281,14 +449,14 @@ extension VoiceSettingsViewController: NSTableViewDelegate {
 
 extension VoiceSettingsViewController: TextToSpeechDelegate {
     func speechDidStart() {
-        DispatchQueue.main.async {
-            self.voicePreviewButton.title = "Stop Preview"
+        DispatchQueue.main.async { [weak self] in
+            self?.voicePreviewButton.title = "Stop Preview"
         }
     }
-    
+
     func speechDidFinish() {
-        DispatchQueue.main.async {
-            self.voicePreviewButton.title = "Preview Voice"
+        DispatchQueue.main.async { [weak self] in
+            self?.voicePreviewButton.title = "Preview Voice"
         }
     }
     

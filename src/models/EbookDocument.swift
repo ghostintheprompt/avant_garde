@@ -102,21 +102,32 @@ class EbookDocument: NSDocument {
     }
     
     // MARK: - Export Functions
-    
-    func exportToKDP() throws -> Data {
+
+    /// Asynchronously exports document to Amazon KDP format
+    /// - Returns: KDP-formatted data
+    /// - Throws: ConversionError if export fails
+    func exportToKDP() async throws -> Data {
         let kdpConverter = KDPConverter()
-        return try kdpConverter.convertToKDP(document: self)
+        return try await kdpConverter.convertToKDP(document: self)
     }
-    
-    func exportToGoogle() throws -> Data {
+
+    /// Asynchronously exports document to Google Play Books format
+    /// - Returns: EPUB-formatted data for Google Play
+    /// - Throws: ConversionError if export fails
+    func exportToGoogle() async throws -> Data {
         let googleConverter = GoogleConverter()
-        return try googleConverter.convertToGoogle(document: self)
+        return try await googleConverter.convertToGoogle(document: self)
     }
-    
-    func exportToEPUB() throws -> Data {
+
+    /// Asynchronously exports document to standard EPUB format
+    /// - Returns: EPUB-formatted data
+    /// - Throws: ConversionError if export fails
+    func exportToEPUB() async throws -> Data {
         // EPUB export implementation
-        let epubData = generateEPUBData()
-        return epubData
+        return try await Task {
+            let epubData = generateEPUBData()
+            return epubData
+        }.value
     }
     
     private func generateEPUBData() -> Data {

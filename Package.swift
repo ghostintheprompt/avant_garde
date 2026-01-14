@@ -20,31 +20,38 @@ let package = Package(
                 "UI",
                 "Models",
                 "Editor"
-            ]
+            ],
+            path: "src"
         ),
         .target(
             name: "Converters",
-            dependencies: []
+            dependencies: [],
+            path: "src/converters"
         ),
         .target(
             name: "Parsers",
-            dependencies: []
+            dependencies: [],
+            path: "src/parsers"
         ),
         .target(
             name: "Audio",
-            dependencies: []
+            dependencies: [],
+            path: "src/audio"
         ),
         .target(
             name: "UI",
-            dependencies: []
+            dependencies: [],
+            path: "src/ui"
         ),
         .target(
             name: "Models",
-            dependencies: []
+            dependencies: [],
+            path: "src/models"
         ),
         .target(
             name: "Editor",
-            dependencies: ["Models"]
+            dependencies: ["Models"],
+            path: "src/editor"
         ),
         .testTarget(
             name: "ConverterTests",
