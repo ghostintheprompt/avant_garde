@@ -11,21 +11,28 @@ protocol AudioControllerDelegate: AnyObject {
 
 class AudioController: NSObject {
     private var audioPlayer: AVAudioPlayer?
-    private let textToSpeech = TextToSpeech()
+    private let textToSpeech: TextToSpeech
     private var playbackTimer: Timer?
-    
+
     weak var delegate: AudioControllerDelegate?
+
+    // MARK: - Initialization
+
+    /// Initialize with an optional TextToSpeech instance (dependency injection)
+    /// - Parameter textToSpeech: The TextToSpeech instance to use (defaults to ServiceContainer)
+    init(textToSpeech: TextToSpeech? = nil) {
+        self.textToSpeech = textToSpeech ?? ServiceContainer.shared.textToSpeech
+        super.init()
+        self.textToSpeech.delegate = self
+        Logger.debug("AudioController initialized with dependency injection", category: .audio)
+    }
     
     // Current playback state
     private(set) var isPlayingAudio = false
     private(set) var isReadingText = false
     private(set) var currentDocument: EbookDocument?
-    private(set) var currentChapterIndex = 0
+    public private(set) var currentChapterIndex = 0
     
-    override init() {
-        super.init()
-        textToSpeech.delegate = self
-    }
 
     deinit {
         stopPlaybackTimer()

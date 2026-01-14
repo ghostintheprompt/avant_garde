@@ -144,7 +144,8 @@ class ConversionViewController: NSViewController {
     }
     
     private func readBackText(_ text: String) {
-        let textToSpeech = TextToSpeech()
+        // Use ServiceContainer for dependency
+        let textToSpeech = ServiceContainer.shared.textToSpeech
         textToSpeech.speak(text)
     }
 }

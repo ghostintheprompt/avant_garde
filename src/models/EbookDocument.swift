@@ -1,18 +1,18 @@
 import Foundation
 import AppKit
 
-struct Chapter {
+struct Chapter: Codable {
     var title: String
     var content: String
     var id: UUID = UUID()
-    
+
     init(title: String, content: String) {
         self.title = title
         self.content = content
     }
 }
 
-struct BookMetadata {
+struct BookMetadata: Codable {
     var title: String = ""
     var author: String = ""
     var description: String = ""
@@ -22,9 +22,21 @@ struct BookMetadata {
     var genre: String = ""
     var language: String = "en"
     var coverImagePath: String = ""
+
+    // Additional EPUB/KDP metadata fields
+    var publisher: String = ""
+    var rights: String = "All rights reserved"
+    var subject: String = ""  // Topic/category
+
+    /// Returns the publication date formatted for EPUB metadata (YYYY-MM-DD)
+    var publicationDate: String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd"
+        return formatter.string(from: publishDate)
+    }
 }
 
-struct FormattingRules {
+struct FormattingRules: Codable {
     var fontSize: CGFloat = 12
     var fontName: String = "Times New Roman"
     var lineSpacing: CGFloat = 1.5
@@ -139,7 +151,8 @@ class EbookDocument: NSDocument {
     // MARK: - Validation
     
     func validateForPlatform(_ platform: PublishingPlatform) -> [ValidationError] {
-        let formattingEngine = FormattingEngine()
+        // Use ServiceContainer for dependency
+        let formattingEngine = ServiceContainer.shared.resolve(FormattingEngine.self) ?? FormattingEngine()
         
         let fullText = NSMutableAttributedString()
         for chapter in chapters {

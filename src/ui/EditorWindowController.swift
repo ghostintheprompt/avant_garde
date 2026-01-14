@@ -531,7 +531,8 @@ class EditorWindowController: NSWindowController {
         guard let document = self.document as? EbookDocument,
               let textView = mainTextView else { return }
 
-        let formattingEngine = FormattingEngine()
+        // Use ServiceContainer for dependency
+        let formattingEngine = ServiceContainer.shared.resolve(FormattingEngine.self) ?? FormattingEngine()
         let attributedText = textView.attributedString()
 
         let errors = formattingEngine.validateForPlatform(.kdp, text: attributedText)
@@ -543,7 +544,8 @@ class EditorWindowController: NSWindowController {
         guard let document = self.document as? EbookDocument,
               let textView = mainTextView else { return }
 
-        let formattingEngine = FormattingEngine()
+        // Use ServiceContainer for dependency
+        let formattingEngine = ServiceContainer.shared.resolve(FormattingEngine.self) ?? FormattingEngine()
         let attributedText = textView.attributedString()
 
         let errors = formattingEngine.validateForPlatform(.google, text: attributedText)
@@ -574,7 +576,8 @@ class EditorWindowController: NSWindowController {
 
         let textToRead = textView.string.isEmpty ? "No text to read." : textView.string
 
-        let textToSpeech = TextToSpeech()
+        // Use ServiceContainer for dependency
+        let textToSpeech = ServiceContainer.shared.textToSpeech
         textToSpeech.speak(text: textToRead)
 
         // Show feedback

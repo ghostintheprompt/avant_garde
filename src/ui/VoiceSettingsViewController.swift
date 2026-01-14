@@ -15,11 +15,27 @@ class VoiceSettingsViewController: NSViewController {
     private var voiceQualitySegmentedControl: NSSegmentedControl!
     private var languagePopUpButton: NSPopUpButton!
 
-    private let textToSpeech = TextToSpeech()
+    private let textToSpeech: TextToSpeech
     private var displayedVoices: [VoiceOption] = []
     private var selectedVoice: VoiceOption?
 
     private let previewText = "Hello, this is a preview of how this voice will sound when reading your ebook. The voice quality and speech rate can be adjusted to your preference."
+
+    // MARK: - Initialization
+
+    /// Initialize with an optional TextToSpeech instance (dependency injection)
+    /// - Parameter textToSpeech: The TextToSpeech instance to use (defaults to ServiceContainer)
+    init(textToSpeech: TextToSpeech? = nil) {
+        self.textToSpeech = textToSpeech ?? ServiceContainer.shared.textToSpeech
+        super.init(nibName: nil, bundle: nil)
+        Logger.debug("VoiceSettingsViewController initialized with dependency injection", category: .audio)
+    }
+
+    required init?(coder: NSCoder) {
+        self.textToSpeech = ServiceContainer.shared.textToSpeech
+        super.init(coder: coder)
+        Logger.debug("VoiceSettingsViewController initialized from coder with ServiceContainer", category: .audio)
+    }
 
     override func loadView() {
         // Create the main view

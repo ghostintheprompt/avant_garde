@@ -29,7 +29,8 @@ class KDPConverter: Converter {
 
     private func convertToKDPSync(document: EbookDocument) throws -> Data {
         // Implementation for converting EbookDocument to .kdp format
-        let formattingEngine = FormattingEngine()
+        // Note: FormattingEngine currently unused, but available via ServiceContainer if needed
+        // let formattingEngine = ServiceContainer.shared.resolve(FormattingEngine.self) ?? FormattingEngine()
 
         // Validate document before conversion
         guard !document.chapters.isEmpty else {
@@ -103,28 +104,95 @@ class KDPConverter: Converter {
     }
     
     private func generateKDPHeader(_ metadata: BookMetadata) -> String {
+        let title = escapeHTML(metadata.title)
+        let author = escapeHTML(metadata.author)
+        let description = escapeHTML(metadata.description)
+
         return """
         <?xml version="1.0" encoding="UTF-8"?>
         <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
-        <html xmlns="http://www.w3.org/1999/xhtml">
+        <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="\(metadata.language)">
         <head>
-            <title>\(metadata.title)</title>
-            <meta name="author" content="\(metadata.author)"/>
-            <meta name="description" content="\(metadata.description)"/>
+            <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+            <title>\(title)</title>
+            <meta name="author" content="\(author)"/>
+            <meta name="description" content="\(description)"/>
+            <meta name="publisher" content="\(escapeHTML(metadata.publisher))"/>
+            <meta name="generator" content="Avant Garde Ebook Authoring Tool"/>
+            <style type="text/css">
+                /* KDP-optimized styles */
+                body {
+                    font-family: 'Times New Roman', serif;
+                    font-size: 12pt;
+                    line-height: 1.15;
+                    margin: 2em;
+                    text-align: justify;
+                }
+                h1 {
+                    font-size: 1.5em;
+                    font-weight: bold;
+                    text-align: center;
+                    page-break-before: always;
+                    margin: 1em 0;
+                }
+                p {
+                    text-indent: 1.5em;
+                    margin: 0;
+                    margin-bottom: 0.5em;
+                    text-align: justify;
+                }
+                .chapter {
+                    page-break-after: always;
+                }
+                /* Prevent widows and orphans */
+                p {
+                    orphans: 2;
+                    widows: 2;
+                }
+            </style>
         </head>
         <body>
-        
+
         """
     }
     
     private func generateKDPChapter(_ chapter: Chapter) -> String {
+        let title = escapeHTML(chapter.title)
+        let formattedContent = formatChapterContentForKDP(chapter.content)
+
         return """
         <div class="chapter">
-            <h1>\(chapter.title)</h1>
-            <p>\(chapter.content.replacingOccurrences(of: "\n", with: "</p><p>"))</p>
+            <h1>\(title)</h1>
+\(formattedContent)
         </div>
-        
+
         """
+    }
+
+    private func formatChapterContentForKDP(_ content: String) -> String {
+        // Split content into paragraphs (double newlines separate paragraphs)
+        let paragraphs = content.components(separatedBy: "\n\n")
+            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { !$0.isEmpty }
+
+        // Format each paragraph with proper HTML
+        let formattedParagraphs = paragraphs.map { paragraph -> String in
+            let escapedParagraph = escapeHTML(paragraph)
+            // Replace single newlines within paragraphs with <br/> tags
+            let withBreaks = escapedParagraph.replacingOccurrences(of: "\n", with: "<br/>\n")
+            return "            <p>\(withBreaks)</p>"
+        }
+
+        return formattedParagraphs.joined(separator: "\n")
+    }
+
+    private func escapeHTML(_ string: String) -> String {
+        return string
+            .replacingOccurrences(of: "&", with: "&amp;")
+            .replacingOccurrences(of: "<", with: "&lt;")
+            .replacingOccurrences(of: ">", with: "&gt;")
+            .replacingOccurrences(of: "\"", with: "&quot;")
+            .replacingOccurrences(of: "'", with: "&#39;")
     }
     
     private func generateKDPFooter() -> String {
@@ -172,6 +240,78 @@ class KDPConverter: Converter {
         return metadata
     }
 
+    // MARK: - KDP Validation
+
+    /// Validates a document against KDP (Kindle Direct Publishing) requirements
+    /// - Parameter document: The document to validate
+    /// - Returns: Array of validation errors (empty if valid)
+    func validateForKDP(_ document: EbookDocument) -> [KDPValidationError] {
+        Logger.info("Validating document for KDP requirements", category: .conversion)
+        var errors: [KDPValidationError] = []
+
+        // Check metadata requirements
+        if document.metadata.title.isEmpty {
+            errors.append(.missingMetadata(field: "title"))
+        }
+        if document.metadata.author.isEmpty {
+            errors.append(.missingMetadata(field: "author"))
+        }
+
+        // Check content requirements
+        if document.chapters.isEmpty {
+            errors.append(.emptyContent)
+        }
+
+        // Validate each chapter
+        for (index, chapter) in document.chapters.enumerated() {
+            if chapter.title.isEmpty {
+                errors.append(.emptyChapterTitle(chapterIndex: index))
+            }
+            if chapter.content.isEmpty {
+                errors.append(.emptyChapterContent(chapterIndex: index))
+            }
+
+            // Check for excessively long chapters (KDP recommends <650KB per HTML file)
+            let estimatedSize = chapter.content.utf8.count
+            if estimatedSize > 650_000 {
+                errors.append(.chapterTooLarge(chapterIndex: index, size: estimatedSize))
+            }
+        }
+
+        // Validate total document size (KDP allows up to 650MB, but warn at 50MB)
+        let totalSize = document.chapters.reduce(0) { $0 + $1.content.utf8.count }
+        if totalSize > 50_000_000 {
+            errors.append(.documentTooLarge(size: totalSize))
+        }
+
+        // Check for potentially problematic content
+        for (index, chapter) in document.chapters.enumerated() {
+            // Warn about non-ASCII characters that might not render properly
+            let content = chapter.title + chapter.content
+            if content.unicodeScalars.contains(where: { $0.value > 127 && !isCommonUnicodeCharacter($0) }) {
+                errors.append(.uncommonCharacters(chapterIndex: index))
+            }
+        }
+
+        if errors.isEmpty {
+            Logger.info("Document passed all KDP validation checks", category: .conversion)
+        } else {
+            Logger.warning("Document has \(errors.count) KDP validation errors", category: .conversion)
+        }
+
+        return errors
+    }
+
+    private func isCommonUnicodeCharacter(_ scalar: Unicode.Scalar) -> Bool {
+        // Allow common extended characters (smart quotes, em dashes, etc.)
+        let commonRanges: [ClosedRange<UInt32>] = [
+            0x2000...0x206F,  // General Punctuation
+            0x2010...0x2027,  // Dashes, quotes
+            0x00A0...0x00FF   // Latin-1 Supplement
+        ]
+        return commonRanges.contains(where: { $0.contains(scalar.value) })
+    }
+
     // MARK: - Converter Protocol
 
     func convert(from source: EbookFormat, completion: @escaping (Bool) -> Void) {
@@ -181,6 +321,40 @@ class KDPConverter: Converter {
             // Simulate conversion work
             Thread.sleep(forTimeInterval: 0.5)
             completion(true)
+        }
+    }
+}
+
+// MARK: - KDP Validation Errors
+
+enum KDPValidationError: Error, CustomStringConvertible {
+    case missingMetadata(field: String)
+    case emptyContent
+    case emptyChapterTitle(chapterIndex: Int)
+    case emptyChapterContent(chapterIndex: Int)
+    case chapterTooLarge(chapterIndex: Int, size: Int)
+    case documentTooLarge(size: Int)
+    case uncommonCharacters(chapterIndex: Int)
+    case invalidHTML(details: String)
+
+    var description: String {
+        switch self {
+        case .missingMetadata(let field):
+            return "Missing required metadata field: \(field)"
+        case .emptyContent:
+            return "Document has no chapters"
+        case .emptyChapterTitle(let index):
+            return "Chapter \(index + 1) has no title"
+        case .emptyChapterContent(let index):
+            return "Chapter \(index + 1) has no content"
+        case .chapterTooLarge(let index, let size):
+            return "Chapter \(index + 1) is too large (\(size) bytes). KDP recommends chapters under 650KB"
+        case .documentTooLarge(let size):
+            return "Document is very large (\(size) bytes). Consider splitting into smaller files"
+        case .uncommonCharacters(let index):
+            return "Chapter \(index + 1) contains uncommon Unicode characters that may not render properly on all Kindle devices"
+        case .invalidHTML(let details):
+            return "Invalid HTML: \(details)"
         }
     }
 }

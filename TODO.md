@@ -1,7 +1,7 @@
 # Avant Garde - Development TODO (Realistic Assessment)
 
 **Last Updated:** 2026-01-14
-**Status:** 🟢 CRITICAL ISSUES COMPLETE + 4 HIGH PRIORITY TASKS DONE (80% COMPLETE!)
+**Status:** 🟢 ALL CRITICAL & HIGH PRIORITY COMPLETE + 1 MEDIUM PRIORITY DONE
 **Based on:** LLM Code Audit Report + Comprehensive Re-audit
 
 ---
@@ -17,7 +17,7 @@
 4. **UI Architecture** - Discovered all files using programmatic UI (no @IBOutlet issues)
 5. **Demo Code Cleanup** - Already in /demos folder
 
-#### High Priority Tasks (3 of 5 COMPLETE):
+#### High Priority Tasks (5 of 5 COMPLETE):
 1. **Async/Await Implementation** ✅
    - Added async methods to GoogleConverter
    - Updated EbookDocument exports to async
@@ -36,24 +36,86 @@
    - Unified preference controls across all tabs
    - Single source of truth for UI patterns
 
+4. **TextEditor Integration** ✅
+   - Fixed saveDocument() with updateChangeCount
+   - Intelligent chapter parsing with title extraction
+   - Full undo/redo support via NSTextView
+   - NSTextViewDelegate for change tracking
+   - Helper methods: hasUnsavedChanges(), getWordCount(), getCharacterCount()
+
+5. **AudioController Integration** ✅
+   - Complete AudioViewController redesign
+   - Full delegate implementation (AudioControllerDelegate)
+   - Chapter-by-chapter navigation (Previous/Next)
+   - Progress tracking with NSProgressIndicator
+   - Pause/Resume functionality
+   - Comprehensive error handling
+
+#### Medium Priority Tasks (2 of 5 COMPLETE):
+1. **Format Detection** ✅
+   - Content-based detection using magic numbers
+   - PDF, EPUB, MOBI, AZW3, KDP support
+   - Extension-based fallback
+   - File validation and error handling
+
+2. **Export System** ✅
+   - KDP HTML with validation (8 error types)
+   - Google EPUB with Dublin Core metadata
+   - Unified ExportValidator with ValidationReport
+   - HTML escaping and safety checks
+   - Complete metadata support (publisher, rights, ISBN)
+
+3. **Dependency Injection** ✅
+   - ServiceContainer with singleton/factory patterns
+   - Thread-safe DI container
+   - Refactored 8+ classes to use DI
+   - Improved testability
+   - Centralized dependency management
+
+4. **Unit Tests** ⏳ (In Progress)
+   - Test infrastructure with mocks
+   - 24+ converter tests (KDP + Google)
+   - Test data factory
+   - Performance tests
+   - Validation test coverage
+
 ### 📊 TIME SAVED:
 - **Original Estimate:** 170-230 hours to MVP
-- **Current Estimate:** 46-68 hours to MVP
-- **Time Saved:** ~140 hours!
+- **Current Estimate:** 14-34 hours to MVP (ONLY TESTING!)
+- **Time Saved:** ~176 hours!
 
 ### 🎯 NEXT STEPS:
-Final High Priority task (1 remaining):
-- [ ] AudioController Integration (6-8 hours)
+**ALL CRITICAL AND HIGH PRIORITY TASKS COMPLETE!**
+
+Ready for Testing & Bug Fixing phase:
+- [ ] Manual testing of all features
+- [ ] Fix any discovered bugs
+- [ ] Polish UI/UX
+- [ ] Performance testing
 
 ### 📁 NEW FILES CREATED:
 - `src/utils/Logger.swift` - Centralized logging system
 - `src/utils/PreferencesHelpers.swift` - Shared preference UI utilities
+- `src/converters/ExportValidator.swift` - Unified export validation system
+- `src/utils/ServiceContainer.swift` - Dependency injection container
+- `Tests/TestUtilities.swift` - Comprehensive test infrastructure with mocks
 
 ### 🔧 FILES MODIFIED:
-- `src/converters/KDPConverter.swift` - Added logging
-- `src/converters/GoogleConverter.swift` - Added async methods + logging
+- `src/converters/KDPConverter.swift` - HTML escaping, validation, improved formatting
+- `src/converters/GoogleConverter.swift` - Dublin Core metadata, EPUB validation, HTML escaping
+- `src/parsers/FormatDetector.swift` - Content-based detection with magic numbers
+- `src/parsers/EbookParser.swift` - Enhanced with validation, error handling, DI
+- `src/models/EbookDocument.swift` - Extended metadata (publisher, rights, subject), made Codable, uses ServiceContainer
+- `src/audio/AudioController.swift` - Refactored to accept TextToSpeech via DI
+- `src/ui/AudioViewController.swift` - Refactored to accept AudioController via DI
+- `src/ui/VoiceSettingsViewController.swift` - Refactored to accept TextToSpeech via DI
+- `src/ui/EditorWindowController.swift` - Uses ServiceContainer for dependencies
+- `src/ui/ConversionViewController.swift` - Uses ServiceContainer for TextToSpeech
+- `Tests/ConverterTests.swift` - Comprehensive converter tests (24 test cases)
+- `Tests/AudioTests.swift` - Prepared for comprehensive audio testing
 - `src/models/EbookDocument.swift` - Made exports async
-- `src/audio/AudioController.swift` - Added deinit + logging
+- `src/audio/AudioController.swift` - Added deinit + logging + exposed currentChapterIndex
+- `src/ui/AudioViewController.swift` - Complete integration: delegate, navigation, progress, pause/resume
 - `src/ui/ConversionViewController.swift` - Fixed memory leak
 - `src/ui/VoiceSettingsViewController.swift` - Fixed memory leaks
 - `src/ui/PreferencesWindowController.swift` - Added deinit + removed ~140 lines of duplicate code
@@ -131,9 +193,9 @@ Files verified:
 
 ---
 
-## 🔴 HIGH PRIORITY - For Beta Release
+## ✅ HIGH PRIORITY - ALL COMPLETE! (2026-01-14)
 
-**Progress: 4/5 complete (Async/Await ✅, Error Handling ✅, Extract Duplicate Code ✅, TextEditor Integration ✅)**
+**Progress: 5/5 complete (Async/Await ✅, Error Handling ✅, Extract Duplicate Code ✅, TextEditor Integration ✅, AudioController Integration ✅)**
 
 ### 6. ✅ Async/Await Implementation (COMPLETED - 2026-01-14)
 
@@ -227,47 +289,211 @@ Fully integrated TextEditor with document system:
 - Smart title detection heuristics
 - Proper undo stack management
 
-### 10. AudioController Integration (6-8 hours)
+### 10. ✅ AudioController Integration (COMPLETED - 2026-01-14)
 
-- [ ] Connect AudioViewController to AudioController properly
-- [ ] Implement chapter-by-chapter navigation
-- [ ] Add progress tracking UI
-- [ ] Fix hardcoded "Your text goes here" placeholder
+Fully integrated AudioViewController with AudioController:
+- [x] Connected AudioViewController to AudioController properly ✅
+  - AudioViewController implements AudioControllerDelegate
+  - Proper delegate callbacks for state changes
+  - Document loading and playback initialization
+- [x] Implemented chapter-by-chapter navigation ✅
+  - Previous/Next chapter buttons
+  - Automatic progression to next chapter
+  - Chapter position tracking
+- [x] Added progress tracking UI ✅
+  - NSProgressIndicator shows playback progress
+  - Real-time updates via audioPlaybackProgress delegate
+  - Progress resets on stop
+- [x] Fixed hardcoded "Your text goes here" placeholder ✅
+  - Now uses actual document content
+  - Loads document via loadDocument() method
+  - Reads chapters sequentially
+- [x] Added pause/resume functionality ✅
+  - Separate pause button
+  - Resume playback from paused position
+  - Proper state management (playing/paused/stopped)
+- [x] Enhanced UI with comprehensive controls ✅
+  - Chapter label showing current position
+  - Status label (Playing/Paused/Stopped)
+  - Progress bar
+  - Navigation buttons (Previous/Next)
+  - Playback controls (Play/Pause/Stop)
+- [x] Added error handling ✅
+  - Error delegate callback
+  - User-friendly error alerts
+  - Comprehensive logging
+
+**Implementation Details:**
+- Proper button enable/disable based on state
+- Checks for document before playing
+- Updates UI in response to all delegate callbacks
+- Shows chapter X of Y information
+- Handles edge cases (no document, first/last chapter)
+- Removed redundant TextToSpeech instance (uses AudioController's)
 
 ---
 
 ## 🟡 MEDIUM PRIORITY - For 1.0 Release
 
-### 11. Format Detection (4-6 hours)
+**Progress: 3/5 complete, 1 in progress (Format Detection ✅, Export System ✅, Dependency Injection ✅, Unit Tests ⏳)**
 
-- [ ] Implement content-based format detection (not just extension)
-- [ ] Add magic number/header checking
-- [ ] Support all claimed formats
+### 11. ✅ Format Detection (COMPLETED - 2026-01-14)
 
-### 12. Complete Export System (8-12 hours)
+- [x] Implement content-based format detection (not just extension) ✅
+- [x] Add magic number/header checking ✅
+- [x] Support all claimed formats ✅
 
-- [ ] Finish KDP HTML generation with proper validation
-- [ ] Complete Google EPUB with full metadata
-- [ ] Test exports with actual KDP and Google Play uploads
-- [ ] Add export validation and error reporting
+**Implementation Details:**
+- Added magic number detection for PDF (%PDF- header)
+- Added EPUB detection (ZIP signature + mimetype verification)
+- Added MOBI detection (BOOKMOBI marker at offset 60)
+- Added AZW3 detection (EXTH header)
+- Added KDP detection (HTML/XML with KDP markers)
+- Content-based detection runs first, extension-based as fallback
+- Enhanced EbookParser with validation and error handling
+- Added utility methods: `supportedFormats()`, `validateFile()`
+- Comprehensive logging throughout detection process
 
-### 13. Dependency Injection (10-15 hours)
+### 12. ✅ Complete Export System (COMPLETED - 2026-01-14)
 
-- [ ] Create ServiceContainer or similar
-- [ ] Inject AudioController instead of creating inline
-- [ ] Inject TextToSpeech where needed
-- [ ] Make code more testable
+- [x] Finish KDP HTML generation with proper validation ✅
+- [x] Complete Google EPUB with full metadata ✅
+- [x] Add export validation and error reporting ✅
+- [ ] Test exports with actual KDP and Google Play uploads (requires actual accounts)
 
-### 14. Add Unit Tests (20-30 hours)
+**Implementation Details:**
 
-Currently ZERO tests exist:
-- [ ] Test ColorThemeManager theme selection
-- [ ] Test KDPConverter output format
-- [ ] Test GoogleConverter EPUB generation
+**KDP Enhancements:**
+- Added HTML escaping for special characters (&, <, >, ", ')
+- Enhanced chapter formatting with proper paragraph handling
+- Improved header with complete metadata (title, author, description, publisher, language)
+- Added KDP-optimized CSS styles (Times New Roman, 12pt, justified text)
+- Implemented comprehensive KDP validation with 8 error types
+- Created `KDPValidationError` enum with detailed error descriptions
+- Validation checks: metadata, chapter sizes (<650KB), document size, Unicode characters
+- Added `validateForKDP()` method returning array of validation errors
+
+**Google EPUB Enhancements:**
+- Complete Dublin Core metadata (dc:title, dc:creator, dc:publisher, dc:identifier, etc.)
+- Added missing metadata fields to BookMetadata: publisher, rights, subject
+- Enhanced EPUB header with full XHTML 1.1 compliance
+- Added Google Play Books optimized CSS styles (Arial, 11pt, responsive)
+- Implemented comprehensive EPUB validation with severity levels (error/warning/info)
+- Created `EPUBValidationError` enum with 12 error types
+- Validation checks: required/recommended metadata, chapter sizes (<300KB), EPUB size (<100MB)
+- Added HTML safety checks (script, iframe tags)
+- Created `ValidationSeverity` enum for error classification
+
+**Export Validation System:**
+- Created new `ExportValidator` class for unified validation
+- Validates documents for all formats: KDP, Google/EPUB, PDF, MOBI/AZW3
+- `ValidationReport` struct with errors, warnings, and info categories
+- User-friendly validation dialog with formatted error messages
+- `presentValidationReport()` shows interactive dialog with proceed/cancel options
+- `formatReport()` creates text output of validation results
+- Color-coded output: ❌ Errors, ⚠️ Warnings, ℹ️ Information
+- Smart validation flow: blocks on critical errors, warns on issues
+- Integration with existing KDP and Google validators
+
+**Metadata Improvements:**
+- Extended `BookMetadata` with: publisher, rights, subject
+- Added `publicationDate` computed property (formatted as YYYY-MM-DD)
+- Made all model structs `Codable`: Chapter, BookMetadata, FormattingRules
+- Proper EPUB identifier generation (ISBN or UUID)
+
+### 13. ✅ Dependency Injection (COMPLETED - 2026-01-14)
+
+- [x] Create ServiceContainer or similar ✅
+- [x] Inject AudioController instead of creating inline ✅
+- [x] Inject TextToSpeech where needed ✅
+- [x] Make code more testable ✅
+
+**Implementation Details:**
+
+**ServiceContainer Architecture:**
+- Created comprehensive DI container with singleton and factory patterns
+- Thread-safe implementation with NSLock for concurrent access
+- Supports three registration patterns:
+  - `registerSingleton()` - shared instance across app
+  - `registerFactory()` - new instance on each resolve
+  - `registerLazySingleton()` - created on first use, then cached
+- Generic `resolve<T>()` method for type-safe dependency resolution
+- `resolveRequired<T>()` throws error if service not registered
+- Convenience properties for common services (textToSpeech, audioController, etc.)
+- `Injectable` protocol for services that need post-injection setup
+- Debug utilities: `registeredServices()`, `debugPrint()`
+- Auto-registered default services (FormatDetector, ExportValidator, converters, etc.)
+
+**Refactored Classes:**
+- **AudioController**: Accepts TextToSpeech via init (defaults to ServiceContainer)
+- **AudioViewController**: Accepts AudioController via init + coder initializer
+- **VoiceSettingsViewController**: Accepts TextToSpeech via init + coder initializer
+- **EbookParser**: Accepts FormatDetector via init (defaults to ServiceContainer)
+- **EditorWindowController**: Uses ServiceContainer for TextToSpeech and FormattingEngine
+- **ConversionViewController**: Uses ServiceContainer for TextToSpeech
+- **EbookDocument**: Uses ServiceContainer for FormattingEngine
+- **Converters**: Reference ServiceContainer for FormattingEngine
+
+**Benefits:**
+- ✅ Eliminated tight coupling between components
+- ✅ Made code fully testable (can inject mocks)
+- ✅ Centralized dependency management
+- ✅ Reduced duplicate instantiation
+- ✅ Flexible lifetime management (singleton vs factory)
+- ✅ Type-safe with generics
+- ✅ Thread-safe for concurrent access
+- ✅ Optional dependencies with fallback defaults
+
+### 14. ⏳ Add Unit Tests (IN PROGRESS - 2026-01-14)
+
+- [x] Create test infrastructure (TestUtilities.swift) ✅
+- [x] Create mock objects (MockTextToSpeech, MockAudioControllerDelegate) ✅
+- [x] Create test data factory ✅
+- [x] Test KDPConverter output format and validation (12 tests) ✅
+- [x] Test GoogleConverter EPUB generation and validation (12 tests) ✅
+- [x] Add performance tests for converters ✅
 - [ ] Test EbookDocument chapter management
 - [ ] Test FormattingEngine validation
+- [ ] Test FormatDetector content-based detection
+- [ ] Test ExportValidator validation reporting
 - [ ] Test TextToSpeech voice selection
 - [ ] Test AudioController playback logic
+- [ ] Test ColorThemeManager theme selection
+
+**Implementation Details:**
+
+**Test Infrastructure Created:**
+- `Tests/TestUtilities.swift` - Comprehensive test utilities (300+ lines)
+  - `MockTextToSpeech` - Mock for testing TTS functionality
+  - `MockAudioControllerDelegate` - Mock delegate for audio testing
+  - `TestDataFactory` - Factory methods for creating test documents
+  - `TestFileUtilities` - Helpers for creating temporary test files
+  - Custom XCTest assertions (`assertValidMetadata`, `assertHTMLEscaped`, `assertValidXHTML`)
+  - Performance testing utilities
+
+**Converter Tests (Tests/ConverterTests.swift):**
+- ✅ 12 KDP Converter tests
+  - Valid document conversion
+  - HTML escaping verification
+  - Validation with valid/invalid documents
+  - Missing metadata detection
+  - Empty content detection
+  - Large chapter warnings
+  - Performance measurements
+- ✅ 12 Google Converter tests
+  - EPUB generation with valid document
+  - Dublin Core metadata verification
+  - Table of contents generation
+  - Validation with various document states
+  - Error severity classification
+  - Performance measurements
+
+**Benefits:**
+- Now fully testable thanks to dependency injection
+- Mocks enable isolated unit testing
+- Test data factory ensures consistent test scenarios
+- Performance tests catch regressions
+- Comprehensive validation testing
 
 ### 15. Accessibility (6-8 hours)
 
@@ -306,9 +532,9 @@ Currently ZERO tests exist:
 
 ### To Minimum Viable Product (MVP):
 - **Critical Issues:** ✅ **ALL COMPLETE!** (Compilation errors ✅, Memory leaks ✅, Action methods ✅, UI Architecture ✅)
-- **High Priority:** ~~50-70~~ ~~32-46~~ ~~18-28~~ 6-8 hours (4 of 5 done! Only AudioController Integration remains!)
+- **High Priority:** ✅ **ALL COMPLETE!** (Async/Await ✅, Error Handling ✅, Extract Duplicate Code ✅, TextEditor Integration ✅, AudioController Integration ✅)
 - **Testing & Bug Fixing:** 40-60 hours
-- **Total:** ~~170-230~~ ~~160-215~~ ~~110-160~~ ~~90-130~~ ~~72-106~~ ~~58-88~~ 46-68 hours (~1-2 weeks full-time)
+- **Total:** ~~170-230~~ ~~160-215~~ ~~110-160~~ ~~90-130~~ ~~72-106~~ ~~58-88~~ ~~46-68~~ 40-60 hours (ONLY TESTING REMAINS!)
 
 ### To App Store Ready:
 - Add Medium Priority tasks: +60-90 hours
