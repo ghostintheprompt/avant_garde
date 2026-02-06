@@ -1,10 +1,10 @@
-// swift-tools-version:5.5
+// swift-tools-version:5.7
 import PackageDescription
 
 let package = Package(
     name: "AvantGarde",
     platforms: [
-        .macOS(.v11)
+        .macOS(.v13)  // macOS 13.0 (Ventura) minimum - Sequoia supported
     ],
     products: [
         .executable(name: "AvantGarde", targets: ["AvantGarde"]),
