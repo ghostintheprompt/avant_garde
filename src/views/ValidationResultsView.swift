@@ -63,11 +63,19 @@ struct ValidationResultsView: View {
 
                 if report.totalIssues == 0 {
                     Section {
-                        ContentUnavailableView(
-                            "No Issues",
-                            systemImage: "checkmark.circle.fill",
-                            description: Text("Your document passed all checks for \(report.format.rawValue).")
-                        )
+                        VStack(spacing: 12) {
+                            Image(systemName: "checkmark.circle.fill")
+                                .font(.system(size: 44))
+                                .foregroundStyle(.green)
+                            Text("No Issues")
+                                .font(.headline)
+                            Text("Your document passed all checks for \(report.format.rawValue).")
+                                .font(.subheadline)
+                                .foregroundStyle(.secondary)
+                                .multilineTextAlignment(.center)
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 24)
                     }
                 }
             }

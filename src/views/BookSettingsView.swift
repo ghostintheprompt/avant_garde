@@ -80,6 +80,7 @@ struct BookSettingsView: View {
                     .fontWeight(.semibold)
                 }
             }
+            .scrollDismissesKeyboard(.interactively)
             .onAppear {
                 metadata = viewModel.document.metadata
             }

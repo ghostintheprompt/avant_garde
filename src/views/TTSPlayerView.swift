@@ -8,6 +8,8 @@ struct TTSPlayerView: View {
     @State private var speechRate: Float = 0.5
     @State private var selectedVoice: VoiceOption?
 
+    private var tts: TextToSpeech { ServiceContainer.shared.textToSpeech }
+
     var body: some View {
         NavigationStack {
             List {
@@ -35,7 +37,7 @@ struct TTSPlayerView: View {
                                 .monospacedDigit()
                         }
                         Slider(value: $speechRate, in: 0.1...1.0, step: 0.05)
-                            .onChange(of: speechRate) { _, rate in
+                            .onChange(of: speechRate) { rate in
                                 viewModel.setTTSRate(rate)
                             }
                     }
@@ -78,6 +80,10 @@ struct TTSPlayerView: View {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Done") { dismiss() }
                 }
+            }
+            .onAppear {
+                speechRate = tts.currentRate
+                selectedVoice = tts.getCurrentVoice()
             }
         }
     }

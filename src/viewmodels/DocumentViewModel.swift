@@ -28,12 +28,16 @@ class DocumentViewModel: ObservableObject {
         return document.chapters[index]
     }
 
-    // MARK: - Statistics
+    // MARK: - Statistics (cached @Published so SwiftUI re-renders on mutation)
 
-    var wordCount: Int { document.getWordCount() }
-    var characterCount: Int { document.getCharacterCount() }
-    var estimatedReadingMinutes: Int {
-        Int(ceil(document.getEstimatedReadingTime() / 60))
+    @Published private(set) var wordCount: Int = 0
+    @Published private(set) var characterCount: Int = 0
+    @Published private(set) var estimatedReadingMinutes: Int = 0
+
+    private func refreshStats() {
+        wordCount = document.getWordCount()
+        characterCount = document.getCharacterCount()
+        estimatedReadingMinutes = Int(ceil(document.getEstimatedReadingTime() / 60))
     }
 
     // MARK: - UI State
@@ -64,12 +68,30 @@ class DocumentViewModel: ObservableObject {
     private var autoSaveTask: Task<Void, Never>?
     private var documentID = UUID()
 
+    private static let lastOpenURLKey = "lastOpenFileURL"
+
     // MARK: - Init
 
     init() {
         self.audioController = ServiceContainer.shared.audioController
         self.audioController.delegate = self
+        restoreLastSession()
         selectFirstChapter()
+        refreshStats()
+    }
+
+    private func restoreLastSession() {
+        // Restore the last open document from UserDefaults
+        if let data = UserDefaults.standard.data(forKey: DocumentViewModel.lastOpenURLKey),
+           let url = try? NSKeyedUnarchiver.unarchivedObject(ofClass: NSURL.self, from: data) as URL? {
+            if let loaded = try? fileManager.load(from: url) {
+                document = loaded
+                currentFileURL = url
+                Logger.info("Restored last session: \(url.lastPathComponent)", category: .general)
+                return
+            }
+        }
+        Logger.info("No previous session to restore — starting fresh", category: .general)
     }
 
     // MARK: - Chapter Selection
@@ -91,36 +113,43 @@ class DocumentViewModel: ObservableObject {
 
     func updateChapterContent(_ content: String, for id: UUID) {
         guard let index = document.chapters.firstIndex(where: { $0.id == id }) else { return }
+        objectWillChange.send()
         document.chapters[index].content = content
+        refreshStats()
         markDirty()
     }
 
     func updateChapterTitle(_ title: String, for id: UUID) {
         guard let index = document.chapters.firstIndex(where: { $0.id == id }) else { return }
+        objectWillChange.send()
         document.chapters[index].title = title
         markDirty()
     }
 
     func addChapter() {
+        objectWillChange.send()
         document.addChapter()
         selectedChapterID = document.chapters.last?.id
+        refreshStats()
         markDirty()
     }
 
     func deleteChapter(id: UUID) {
         guard let index = document.chapters.firstIndex(where: { $0.id == id }) else { return }
+        objectWillChange.send()
         document.chapters.remove(at: index)
-        // Select adjacent chapter
         if document.chapters.isEmpty {
             selectedChapterID = nil
         } else {
             let newIndex = min(index, document.chapters.count - 1)
             selectedChapterID = document.chapters[newIndex].id
         }
+        refreshStats()
         markDirty()
     }
 
     func moveChapters(from source: IndexSet, to destination: Int) {
+        objectWillChange.send()
         document.chapters.move(fromOffsets: source, toOffset: destination)
         markDirty()
     }
@@ -128,6 +157,7 @@ class DocumentViewModel: ObservableObject {
     // MARK: - Metadata
 
     func updateMetadata(_ metadata: BookMetadata) {
+        objectWillChange.send()
         document.metadata = metadata
         markDirty()
     }
@@ -140,7 +170,9 @@ class DocumentViewModel: ObservableObject {
         documentID = UUID()
         currentFileURL = nil
         hasUnsavedChanges = false
+        UserDefaults.standard.removeObject(forKey: DocumentViewModel.lastOpenURLKey)
         selectFirstChapter()
+        refreshStats()
     }
 
     func save() async {
@@ -149,6 +181,7 @@ class DocumentViewModel: ObservableObject {
             do {
                 try fileManager.save(document, to: url)
                 hasUnsavedChanges = false
+                persistLastOpenURL(url)
                 Logger.info("Document saved to \(url.lastPathComponent)", category: .general)
             } catch {
                 Logger.error("Save failed", error: error, category: .general)
@@ -167,6 +200,7 @@ class DocumentViewModel: ObservableObject {
             )
             currentFileURL = url
             hasUnsavedChanges = false
+            persistLastOpenURL(url)
         } catch {
             Logger.error("Save As failed", error: error, category: .general)
         }
@@ -179,15 +213,24 @@ class DocumentViewModel: ObservableObject {
             documentID = UUID()
             currentFileURL = url
             hasUnsavedChanges = false
+            persistLastOpenURL(url)
             selectFirstChapter()
+            refreshStats()
         } catch {
             Logger.error("Load failed", error: error, category: .general)
+        }
+    }
+
+    private func persistLastOpenURL(_ url: URL) {
+        if let data = try? NSKeyedArchiver.archivedData(withRootObject: url as NSURL, requiringSecureCoding: true) {
+            UserDefaults.standard.set(data, forKey: DocumentViewModel.lastOpenURLKey)
         }
     }
 
     // MARK: - Export
 
     func exportKDP() async {
+        guard !isExporting else { return }
         isExporting = true
         exportError = nil
         do {
@@ -202,6 +245,7 @@ class DocumentViewModel: ObservableObject {
     }
 
     func exportGoogle() async {
+        guard !isExporting else { return }
         isExporting = true
         exportError = nil
         do {

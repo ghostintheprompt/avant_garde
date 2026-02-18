@@ -66,7 +66,7 @@ struct ContentView: View {
         }
         .toolbar {
             // Leading: document actions
-            ToolbarItemGroup(placement: .navigationBarLeading) {
+            ToolbarItemGroup(placement: .topBarLeading) {
                 Menu {
                     Button("New Book", systemImage: "doc.badge.plus") {
                         viewModel.newDocument()
@@ -84,7 +84,7 @@ struct ContentView: View {
             }
 
             // Trailing: export + theme + TTS
-            ToolbarItemGroup(placement: .navigationBarTrailing) {
+            ToolbarItemGroup(placement: .topBarTrailing) {
                 Button {
                     viewModel.isShowingThemePicker = true
                 } label: {
@@ -114,14 +114,15 @@ struct ContentView: View {
                     }
                 }
                 .help("Export")
+                .disabled(viewModel.isExporting)
 
                 Button {
                     viewModel.isShowingTTSPlayer = true
                 } label: {
                     Image(systemName: viewModel.ttsIsPlaying ? "waveform" : "headphones")
+                        .foregroundStyle(viewModel.ttsIsPlaying ? Color.accentColor : Color.primary)
                 }
                 .help("Listen")
-                .symbolEffect(.variableColor, isActive: viewModel.ttsIsPlaying)
             }
         }
     }

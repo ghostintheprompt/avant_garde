@@ -1,307 +1,181 @@
-# AUDIT 4: Crash & Bug Hunt
-## Avant Garde Authoring App
-
+# BUG HUNT REPORT — Avant Garde v2.0
+## Crash & Edge Case Analysis
 **Date:** February 2026
-**Focus:** Crashes, data loss, broken features, impossible states, edge cases
-**Standard:** Zero data loss, zero crashes during normal use
+**Score: 8/10** (up from 4/10)
 
 ---
 
-## EXECUTIVE SUMMARY
+## Previously Critical Bugs — All Fixed ✓
 
-**Score: 4/10**
-
-Several bugs range from guaranteed crashes on launch to silent data disconnects that authors would never notice until their book fails to export. The most serious issue is a potential deadlock in ServiceContainer. Multiple features are "implemented" in the UI but don't actually work (chapter navigation, word count updates, TTS chapter tracking, theme application). None of these would survive a real-user playtest.
+| Bug | v1.0 | v2.0 |
+|-----|------|------|
+| B1: makeWindowControllers() crash | ❌ Guaranteed crash | ✓ NSDocument removed |
+| B2: ServiceContainer deadlock | ❌ Deadlock | ✓ NSRecursiveLock |
+| B3: ValidationSeverity duplicate | ❌ Compile error | ✓ Deduplicated |
+| B4: exportToEPUB() returns plain text | ❌ Fake data | ✓ Real EPUB |
+| B5: Chapter tableview no data source | ❌ Empty | ✓ SwiftUI List |
+| B6: Chapter selection does nothing | ❌ Broken | ✓ Works |
+| B7: Theme changes not applied | ❌ Ignored | ✓ Applied |
+| B8: Word count never updates | ❌ Static | ✓ Computed |
+| B9: Text never saved to model | ❌ Data loss | ✓ Fixed |
+| B10: TTS always plays chapter 1 | ❌ Wrong chapter | ✓ Correct chapter |
+| B11-B13: TODOs doing nothing | ❌ Dead code | ✓ Removed |
 
 ---
 
-## CRITICAL BUGS (Guaranteed Crashes or Data Loss)
+## NEW Critical Bugs
 
-### B1 — `makeWindowControllers()` Crashes if "Main" Storyboard Doesn't Exist
-**File:** `src/models/EbookDocument.swift:66-71`
-**Severity:** CRITICAL — Guaranteed crash on launch
-
-```swift
-override func makeWindowControllers() {
-    let storyboard = NSStoryboard(name: NSStoryboard.Name("Main"), bundle: nil)
-    if let windowController = storyboard.instantiateController(
-        withIdentifier: NSStoryboard.SceneIdentifier("DocumentWindowController")
-    ) as? NSWindowController {
-        self.addWindowController(windowController)
-    }
-}
+### B1 — `onChange(of:)` Compile Error on iOS 16
+**File:** `src/views/ChapterEditorView.swift:78, 86`
+**Severity:** CRITICAL — compile error on iOS 16 target
+**Reproduce:** Set deployment target to iOS 16.0 in Xcode, build.
 ```
-
-There is no `Main.storyboard` in the project (UI is entirely programmatic). `NSStoryboard(name: "Main", bundle: nil)` will return `nil` if the storyboard file doesn't exist, but `instantiateController` on a nil storyboard results in a crash on macOS. On iOS, `UIStoryboard(name:bundle:)` is not nil-failable — it crashes immediately if the storyboard doesn't exist.
-
-**Steps to reproduce:** Open a saved document (triggers `makeWindowControllers()`). Instant crash.
-
-**Fix:** Delete this entire `makeWindowControllers()` override. Window controllers are already created programmatically in `EbookConverterApp.swift`.
-
----
-
-### B2 — ServiceContainer Lazy Singleton Deadlock
-**File:** `src/utils/ServiceContainer.swift:55-69`
-**Severity:** CRITICAL — App freeze / watchdog kill
-
-```swift
-func registerLazySingleton<T>(_ type: T.Type, factory: @escaping () -> T) {
-    lock.lock()          // ← NSLock acquired
-    defer { lock.unlock() }
-
-    let key = String(describing: type)
-    factories[key] = {
-        let instance = factory()
-        self.lock.lock()  // ← DEADLOCK: NSLock.lock() is NOT reentrant
-        self.singletons[key] = instance
-        self.factories.removeValue(forKey: key)
-        self.lock.unlock()
-        return instance
-    }
-}
+Error: Extra argument in call (two-parameter closure introduced in iOS 17)
 ```
-
-If any service's factory calls back into `ServiceContainer.resolve()` during its own initialization, the closure will try to acquire `self.lock` while `registerLazySingleton` still holds it. `NSLock` is not reentrant. This deadlocks.
-
-**Currently safe** because no service factories call back into ServiceContainer during init. But this is a time-bomb: if a future refactor makes `FormattingEngine` resolve its dependencies via the container during init, the app will freeze silently.
-
-**Fix:** Replace `NSLock` with `NSRecursiveLock`:
-```swift
-private let lock = NSRecursiveLock()
-```
-
----
-
-### B3 — `ValidationSeverity` Enum Defined Twice — Compile Error
-**Files:** `src/editor/FormattingEngine.swift:16-19`, `src/converters/GoogleConverter.swift:484-488`
-**Severity:** CRITICAL — Compile failure
-
-`ValidationSeverity` is defined in both files:
-```swift
-// FormattingEngine.swift:16
-enum ValidationSeverity {
-    case error, warning, info
-}
-
-// GoogleConverter.swift:484
-enum ValidationSeverity {
-    case error, warning, info
-}
-```
-
-This is a redeclaration and will cause a compile error when both files are compiled in the same module. If this currently compiles, it's only because the SPM targets are split (`Editor` vs `Converters`) — but if they share a module boundary or are linked together, this will break.
-
-**Fix:** Define `ValidationSeverity` once in a shared `Models` target and import it everywhere.
-
----
-
-### B4 — `EbookDocument.exportToEPUB()` Returns Fake Data
-**File:** `src/models/EbookDocument.swift:137-149`
-**Severity:** HIGH — Silent data corruption
-
-```swift
-func exportToEPUB() async throws -> Data {
-    return try await Task {
-        let epubData = generateEPUBData()
-        return epubData
-    }.value
-}
-
-private func generateEPUBData() -> Data {
-    // Basic EPUB structure generation
-    let content = chapters.map { "\($0.title)\n\n\($0.content)" }.joined(separator: "\n\n---\n\n")
-    return content.data(using: .utf8) ?? Data()
-}
-```
-
-`exportToEPUB()` returns plain concatenated text, not EPUB format. EPUB is a ZIP archive containing XML, OPF manifests, NCX/NAV files, and XHTML chapters. This data written to a `.epub` file would produce a corrupt file that no EPUB reader can open.
-
-This is particularly dangerous because `GoogleConverter.convertToGoogle()` also outputs a single XHTML file called "EPUB" — not a real EPUB ZIP archive either. Both exports are incomplete implementations.
-
-**Impact:** A user who exports, uploads to Google Play Books, and gets a rejection will blame their manuscript.
-
----
-
-## HIGH BUGS (Broken Features)
-
-### B5 — Chapter Table View Has No Data Source — Always Shows Empty
-**File:** `src/ui/EditorWindowController.swift:79-88`
-**Severity:** HIGH — Core feature broken
-
-```swift
-let tableView = NSTableView()
-let column = NSTableColumn(identifier: NSUserInterfaceItemIdentifier("chapter"))
-column.title = "Chapters"
-column.width = 220
-tableView.addTableColumn(column)
-tableView.headerView = nil
-scrollView.documentView = tableView
-self.chapterTableView = tableView
-// ← Missing: tableView.dataSource = self
-// ← Missing: tableView.delegate = self
-```
-
-`NSTableView` requires a `dataSource` and `delegate` to display content. Neither is set. The chapter list will always show as empty, even after calling `chapterTableView?.reloadData()` in `addChapter()`.
-
-**Fix:** Implement `NSTableViewDataSource` and `NSTableViewDelegate` on `EditorWindowController`, set them, and implement `numberOfRows(in:)` and `tableView(_:viewFor:row:)`.
-
-On iOS: `UITableView` has the same requirement. Must set `.dataSource` and `.delegate`.
-
----
-
-### B6 — Selecting a Chapter in the Sidebar Does Nothing
-**Severity:** HIGH — Navigation broken
-
-Even if B5 were fixed, selecting a chapter in the sidebar has no effect on the editor. There's no `tableView(_:shouldSelectRow:)` handler, no scroll-to-chapter behavior. The chapter navigator is purely decorative.
-
-**Fix:** Implement `tableViewSelectionDidChange(_:)` to load the selected chapter's content into the text view (or navigate to it in a multi-chapter UITextView layout).
-
----
-
-### B7 — Theme Application Never Updates the Editor
-**File:** `src/ui/ColorThemeManager.swift:196-207` and `src/ui/EditorWindowController.swift`
-**Severity:** HIGH — Core feature silent failure
-
-`ColorThemeManager.applyTheme()` posts `.themeDidChange` notification. No part of `EditorWindowController` observes this notification. The `NSTextView` background and text color never change when a theme is selected.
-
-**Steps to reproduce:** Select any color theme from View → Color Themes. Nothing changes visually.
-
-**Fix:** In `EditorWindowController.setupWindow()`, add:
-```swift
-NotificationCenter.default.addObserver(
-    self, selector: #selector(themeDidChange(_:)),
-    name: .themeDidChange, object: nil
-)
-```
-Then implement `themeDidChange` to update `mainTextView?.backgroundColor` and `mainTextView?.textColor`.
-
----
-
-### B8 — Word Count Never Updates While Typing
-**File:** `src/ui/EditorWindowController.swift:643-655`
-**Severity:** HIGH — Metric feature broken
-
-`updateStatistics()` is only called in `addChapter()`. The sidebar labels "Words: 0", "Characters: 0", "Est. Reading: 0 min" never change as the user types.
-
-**Root cause:** `NSTextView` delegate not set. There's no `textDidChange` notification handler.
-
 **Fix:**
 ```swift
-textView.delegate = self
-// ...
-func textDidChange(_ notification: Notification) {
-    updateStatistics()
+// Replace both occurrences:
+.onChange(of: bodyText) { newValue in  // iOS 16 compatible
+    viewModel.updateChapterContent(newValue, for: chapterID)
 }
 ```
 
-Note: `updateStatistics()` reads from `document.chapters`, but the text view content is NOT synced back to `document.chapters` on each keystroke either. So even after fixing the delegate, the counts would still be wrong unless text→model sync is also fixed.
+### B2 — `ContentUnavailableView` Crash on iOS 16
+**File:** `src/views/ValidationResultsView.swift:98-105`
+**Severity:** CRITICAL — crash on iOS 16
+**Reproduce:** Run on iOS 16 device/simulator, validate a document with no issues.
+**Fix:** Replace with custom empty state view (see SIERRA_UI_AUDIT_REPORT.md C2).
 
----
-
-### B9 — Text View Content Never Saved Back to Document Model
-**Severity:** HIGH — All chapter content is lost on document close
-
-The `NSTextView` contains the user's writing. But when `saveDocument()` is called, it serializes `document.chapters` from the in-memory model. There is no code that copies the `textView.string` back to `document.chapters[currentChapter].content` before saving.
-
-**Steps to reproduce:**
-1. Create a new document
-2. Type "Hello World" in the editor
-3. Save the document
-4. Close and reopen
-5. Editor shows empty — "Hello World" is gone
-
-**This is a data loss bug.** The text view is cosmetic — the data model is never populated from user input.
-
-**Fix:** Implement `NSTextViewDelegate.textDidChange` to write `textView.attributedString.string` back to `document.chapters[currentIndex].content`.
-
----
-
-### B10 — `playCurrentChapter()` Always Plays Chapter 1
-**File:** `src/EbookConverterApp.swift:537-539`
-**Severity:** HIGH — Feature broken
-
+### B3 — Concurrent Export Tasks: Data Race on `exportedData`
+**File:** `src/viewmodels/DocumentViewModel.swift:123-145`, `src/views/ContentView.swift:92-105`
+**Severity:** HIGH
+**Reproduce:** Tap Export for KDP, then immediately tap Export for Google Play before the first completes.
+**What happens:** Both tasks run concurrently. Both set `exportedData`, the last one wins. The export sheet opens for whichever export finishes last. The other export's data is silently discarded.
+**Fix:** Guard at the start of both export functions:
 ```swift
-// TODO: Implement current chapter detection
-if let firstChapter = document.chapters.first {
-    textToSpeech?.speakChapter(firstChapter)  // ← Always chapter 1
+func exportKDP() async {
+    guard !isExporting else { return }
+    ...
 }
 ```
+The `isExporting` flag is already set but checked AFTER task starts — move check to before.
 
-Regardless of which chapter is selected in the sidebar, TTS always reads chapter 1.
+### B4 — Auto-save Session Recovery Broken
+**File:** `src/viewmodels/DocumentViewModel.swift:193-203`, `src/utils/DocumentFileManager.swift:72-90`
+**Severity:** HIGH — potential data loss
+**Reproduce:**
+1. Type content (auto-save fires after 3 seconds)
+2. Force-quit the app before manually saving
+3. Reopen app
 
-**Fix:** Track the currently selected chapter index in `EditorWindowController`, expose it via a property, and read it in `playCurrentChapter()`.
+**What happens:** `DocumentViewModel.init()` creates `documentID = UUID()` — a new random UUID. The auto-save from the previous session was stored at `autoSaveURL(for: previousUUID)`. This URL is unknown to the new session, so the auto-save is never recovered. The user loses all unsaved work.
+
+**Fix:** Persist the document ID to UserDefaults on creation and restore on launch. Or use a fixed auto-save path (e.g., `autosave/last-session.avantgarde`).
+
+### B5 — `DocumentViewModel.wordCount` Stale Due to Reference Type
+**File:** `src/viewmodels/DocumentViewModel.swift:30`
+**Severity:** HIGH — incorrect data shown to user
+**Reproduce:** Type in the editor. Check the status bar word count — it does not update in real time.
+**Root cause:** `EbookDocument` is a class. `@Published var document` only fires on assignment, not mutation. Mutating `document.chapters[i].content` does not trigger a SwiftUI re-render of the `StatusBar`.
+**Fix:** Cache and update `wordCount` as a `@Published` property (see PERFORMANCE_PROFILING_REPORT.md M2).
 
 ---
 
-### B11 — `showVoiceSettings()` Opens Preferences But Doesn't Navigate to Voice Tab
-**File:** `src/EbookConverterApp.swift:566-570`
-**Severity:** MEDIUM
+## HIGH Bugs
 
+### B6 — Delete Last Chapter Leaves selectedChapterID Set
+**File:** `src/viewmodels/DocumentViewModel.swift:97-107`
+**Reproduce:** Create a document with 1 chapter. Delete it.
+**What happens:** `deleteChapter()` checks `if document.chapters.isEmpty { selectedChapterID = nil }` — this is correct. But `ChapterEditorView` then shows `EmptyEditorView`. If the user then taps "Add First Chapter" in the empty state, `addChapter()` adds a chapter but `selectedChapterID` may point to the newly added chapter's ID immediately — this works correctly. ✓
+
+Actually let me trace more carefully: `addChapter()` calls `document.addChapter()` then sets `selectedChapterID = document.chapters.last?.id`. Since `document` is a class and `@Published` won't fire, the `ChapterListView` may not re-render to show the new chapter.
+
+**Root cause:** Same as B5 — reference type mutation not observed by SwiftUI. The chapter list won't refresh.
+
+### B7 — `ExportShareView.writeTempFile()` Silent Failure Has No User Feedback
+**File:** `src/views/ContentView.swift:165-172`
+**Reproduce:** Fill app sandbox to capacity, then attempt export.
+**What happens:** `writeTempFile()` catches the error and logs it, but `tempURL` stays `nil`, and the view stays on the "Preparing export..." `ProgressView` indefinitely. User is stuck with a spinner and no way to dismiss.
+**Fix:**
 ```swift
-@objc private func showVoiceSettings() {
-    showPreferences()
-    // TODO: Navigate to voice tab
+@State private var writeError: String?
+
+private func writeTempFile() {
+    do {
+        try file.data.write(to: tmp, options: .atomic)
+        tempURL = tmp
+    } catch {
+        writeError = error.localizedDescription
+        // Then show error state + dismiss button
+    }
 }
 ```
 
-Voice Settings opens the Preferences window at whatever tab was last open. The user has to manually find the Voice tab.
-
-**Fix:** `PreferencesWindowController` needs a method to select a specific tab. Call it after `showWindow(nil)`.
-
----
-
-### B12 — `showHelp()` and `reportIssue()` Print to Console and Do Nothing
-**File:** `src/EbookConverterApp.swift:572-574, 629-631`
-**Severity:** MEDIUM
-
+### B8 — `TTSPlayerView` Speed Slider Disconnected from Current Rate
+**File:** `src/views/TTSPlayerView.swift:22`
+**Reproduce:** Open TTS Player sheet. The speed slider shows 0.5 (default `@State`), but if the user previously changed the rate and closed the sheet, the slider doesn't reflect the current rate.
+**Fix:** Initialize `speechRate` from `audioController.currentRate`:
 ```swift
-@objc private func showHelp() {
-    // TODO: Show help window
-    print("Help requested")
-}
-
-@objc private func reportIssue() {
-    // TODO: Open issue reporting
-    print("Report issue requested")
+// Can't access environment object in @State init, use onAppear:
+.onAppear {
+    speechRate = ServiceContainer.shared.textToSpeech.currentRate
 }
 ```
 
-Both Help and Report Issue show nothing to the user. These menu items appear functional but do nothing. Users who need help will see no response.
+### B9 — `BookSettingsView` Discards Changes on Back Swipe (iPhone)
+**File:** `src/views/BookSettingsView.swift`
+**Reproduce:** Open Book Settings on iPhone. Edit title. Swipe down to dismiss (system sheet dismiss gesture) instead of tapping "Cancel" or "Done".
+**What happens:** Sheet dismisses via system gesture, which calls `dismiss()` without going through the "Done" button. The local `metadata` changes are silently discarded. This matches expected behavior for a Cancel-able sheet, but "Done" is the only save path and it's not obvious that swipe-down = Cancel.
+**Fix:** Add `.interactiveDismissDisabled(true)` when there are unsaved changes, or confirm on dismiss:
+```swift
+.interactiveDismissDisabled(metadataHasChanges)
+```
 
 ---
 
-### B13 — `insertChapter()` Creates Text Artifact, Not a Real Chapter
-**File:** `src/ui/EditorWindowController.swift:479-486`
-**Severity:** MEDIUM
+## MEDIUM Bugs
 
-Inserting `"--- Chapter Break ---"` as text means:
-1. It appears in the exported KDP HTML as paragraph text (`<p>--- Chapter Break ---</p>`)
-2. It is not a chapter break in the data model
-3. It will NOT cause a proper `page-break-before: always` in the CSS
+### B10 — `ChapterEditorView` Focus Fires on Every Re-render
+**File:** `src/views/ChapterEditorView.swift:109-112`
+**Issue:** The `DispatchQueue.main.asyncAfter` in `onAppear` fires focus unconditionally. On iPad with the sidebar open, switching chapters fires focus (correct), but if the user taps into the chapter list to reorder chapters, focus immediately jumps back to the editor, making reordering difficult.
 
-An author who uses "Insert Chapter Break" will get a visible `--- Chapter Break ---` string in their published ebook.
+### B11 — `DocumentViewModel.saveAs()` Has No Custom Filename UI
+**File:** `src/viewmodels/DocumentViewModel.swift:155-163`
+**Issue:** `saveAs()` uses `fileManager.save(document, named: title)` which auto-derives the filename from the book title. If two books have the same title, the second save overwrites the first silently (`.atomic` write). No collision detection or user prompt.
 
----
-
-## EDGE CASES TO TEST
-
-| Scenario | Expected | Actual | Risk |
-|----------|----------|--------|------|
-| Open document with 0 chapters | Show empty editor with prompt | Unclear — `chapters.first` would return nil in TTS | MEDIUM |
-| Export with empty chapter content | Validation catches it | Validation does catch this — good | LOW |
-| Export with no title/author set | Validation catches it | KDPConverter.validateForKDP checks this | LOW |
-| Type > 650,000 chars in one chapter | Warning shown | Validation checks this | LOW |
-| Very long book (50+ chapters) | Memory stays reasonable | All loaded at once — potential issue | MEDIUM |
-| App goes to background during TTS | TTS pauses gracefully | No AVAudioSession setup — behavior unknown | HIGH |
-| App goes to background during export | Export completes or cancels cleanly | No background task entitlement | HIGH |
-| Two TextToSpeech instances speak simultaneously | Graceful handling | Two synthesizers — undefined behavior | MEDIUM |
+### B12 — Validation Run on Stale Document State
+**File:** `src/viewmodels/DocumentViewModel.swift:167-174`
+**Issue:** `validateKDP()` calls `document.validateForKDP()` which calls `ExportValidator().validate(document: self, for: .kdp)`. Since `EbookDocument` is a class and chapter content may not have propagated fully (see B5 — SwiftUI `@Published` doesn't fire on mutation), validation might run on a document whose chapters don't reflect the latest text in the editor.
+**This only occurs** if the user hits Validate very quickly after typing. Auto-save debounce is 3s. Validation is typically after a pause.
 
 ---
 
-## SOFT-LOCK SCENARIOS
+## LOW Bugs
 
-1. **User types in editor, closes without saving:** On iOS (no explicit save), all work is lost because text view content is never synced to model (see B9). This is the most likely scenario for an iOS authoring app.
+### B13 — `VoiceManager` Singleton References macOS System Preferences
+**File:** `src/audio/VoiceManager.swift:70-76`
+**Issue:** `getVoiceInstallationInstructions()` mentions "System Preferences → Accessibility" which is macOS-only. On iOS, voice download is in Settings → Accessibility → Spoken Content. This function isn't called from any UI currently, but if surfaced it will confuse iOS users.
 
-2. **User tries to export before entering title/author:** Validation catches missing fields, but there's no UI to set them. User gets an error with no path to fix it (no metadata editing screen).
+### B14 — `TTSPlayerView` Prev/Next Buttons Disable When Not Playing
+**File:** `src/views/TTSPlayerView.swift:92, 108`
+**Issue:** `.disabled(!viewModel.ttsIsPlaying)` on Prev/Next buttons means users can't navigate chapters before starting TTS. They should be able to select a starting chapter first.
 
-3. **User deletes all chapters:** No way to do this in UI (no delete chapter button). But if they could, document with 0 chapters would show no content and validation would error without a clear "add chapter" prompt.
+### B15 — `EbookFormat.rawValue` Used in Validation Report Title
+**File:** `src/views/ValidationResultsView.swift:123`
+**Issue:** `navigationTitle("Validation — \(report.format.rawValue)")` will show format strings like "KDP HTML", "EPUB" etc. For `.epub` the rawValue might not be user-facing friendly depending on what `EbookFormat` defines.
+
+---
+
+## Bug Priority Matrix
+
+| Bug | Severity | Reproducible | Data Loss? |
+|-----|----------|-------------|------------|
+| B1: onChange iOS 16 | CRITICAL | Always | No (build fail) |
+| B2: ContentUnavailableView iOS 16 | CRITICAL | Always | No (crash) |
+| B3: Concurrent export | HIGH | Race condition | No |
+| B4: Auto-save not recovered | HIGH | Always | YES |
+| B5: wordCount stale | HIGH | Always | No |
+| B6: ChapterList no re-render | HIGH | On add chapter | No |
+| B7: Export spinner stuck | HIGH | Disk full | No |
+| B8: Speed slider wrong on open | MEDIUM | After rate change | No |
+| B9: Sheet dismiss discards | MEDIUM | Swipe to dismiss | Minor |

@@ -1,236 +1,141 @@
-# AUDIT 2: App Engagement & User Flow
-## Avant Garde Authoring App
-
+# APP ENGAGEMENT REPORT — Avant Garde v2.0
+## User Flow & Core Loop Analysis
 **Date:** February 2026
-**Focus:** Core user journey, feature discovery, retention, workflow friction
-**Note:** This audit replaces "Game Economy" with "App Engagement" — the equivalent analysis for a productivity app.
+**Score: 7/10** (up from 5/10)
 
 ---
 
-## EXECUTIVE SUMMARY
+## Executive Summary
 
-**Score: 5/10**
-
-Avant Garde has a genuinely useful core value proposition (write → validate → export for KDP/Google). The business logic is solid. But the user flow has significant gaps: there's no onboarding, critical features are buried in menus, the chapter model is disconnected from the editor, and the export flow doesn't leverage iOS sharing conventions. The app's best features (12 themes, TTS proofing, dual-platform export) are invisible to new users.
+The core authoring loop now works end-to-end: chapters are selectable, content persists in the model, TTS reads the correct chapter, themes apply visually, and export generates real data. The critical data-loss bug (B9 from the original audit — text never saved back to model) is fully fixed. The remaining engagement gaps are structural: there is no document library UI, no onboarding, and the path from "just installed" to "exported my first book" has several invisible steps.
 
 ---
 
-## CORE USER JOURNEY ANALYSIS
+## Core Loop Assessment
 
-### The Author's Loop (Target Flow)
+**Current user journey:**
+1. Open app → blank Chapter 1 loads ✓
+2. Type content → syncs to model via `onChange` ✓
+3. Switch chapters → content preserved ✓
+4. Apply theme → editor background changes ✓
+5. Export → share sheet with real file ✓
+6. TTS → reads correct chapter ✓
+
+**Fixed issues from v1.0:**
+- ✓ Chapter selection now loads correct content
+- ✓ Text changes sync back to `DocumentViewModel`
+- ✓ TTS reads selected chapter (not always chapter 1)
+- ✓ Theme changes apply to editor background
+- ✓ Export generates real KDP HTML and EPUB data
+- ✓ Word count is computed from actual model data
+
+---
+
+## CRITICAL Issues
+
+### C1 — No Document Library / File Browser
+**Issue:** `DocumentFileManager` saves documents to the app sandbox, but there is no UI to list or open previously saved documents. `DocumentViewModel.load(from:)` accepts a URL, and `ContentView` has a `.fileImporter` trigger, but there is no "Open Recent" or library browser. Users who close the app lose their work unless auto-save happened to fire.
+
+**Impact:** Data loss risk. First-time users returning to the app have no way to find their previous work.
+
+**Fix needed:** A library view — either as a sheet from the toolbar "Open..." button, or as the initial screen before the editor, listing `DocumentFileManager().listDocuments()` sorted by modification date.
+
+### C2 — Auto-save Fires But There's No Recovery on Launch
+**File:** `src/viewmodels/DocumentViewModel.swift:188-196`
+**Issue:** Auto-save writes to `.autosave/{uuid}.avantgarde` but on app launch, `AvantGardeApp` creates a fresh `DocumentViewModel()` with a new `documentID = UUID()`. The auto-save for the previous session is never checked. The auto-saved file is orphaned and never cleaned up.
+
+**Fix:** On `DocumentViewModel.init()`, check `DocumentFileManager.autoSaveURL(for:)` — but since we don't persist the session UUID, this is broken by design. Auto-save needs to use a stable identifier (e.g., save the last-open file URL to `UserDefaults`).
+
+```swift
+// In DocumentViewModel.init():
+if let lastURL = UserDefaults.standard.url(forKey: "lastOpenFileURL") {
+    load(from: lastURL)
+}
 ```
-Write Chapter → Review with TTS → Check Formatting → Export → Publish
-     ↑__________________↑
+
+---
+
+## HIGH Issues
+
+### H1 — No Onboarding for First-Time Users
+**Issue:** A first-time user opens the app to a blank Chapter 1 with a cursor. There is no explanation of:
+- What Avant Garde is for (KDP / Google Play ebook authoring)
+- How to add chapters (the `+` button is subtle)
+- Where to set book title/author (hidden in toolbar menu)
+- How to export
+
+**Recommended flow:** One-time welcome sheet (3 swipeable cards):
+1. "Write your book" → shows chapter list + editor screenshot
+2. "Choose a theme" → shows theme grid
+3. "Export anywhere" → shows KDP + Google Play logos
+
+Trigger condition: `!UserDefaults.standard.bool(forKey: "onboardingComplete")`
+
+### H2 — "Book Settings" Is Invisible Until User Explores
+**File:** `src/views/ContentView.swift:72-78`
+**Issue:** Book title, author, and ISBN are critical for export (KDP validation requires both title and author). These are only accessible via the `doc.text` menu → "Book Settings" — a 2-tap navigation path that new users won't discover. All exports will show validation errors on an empty document until discovered.
+
+**Fix:** After creating a new document, show `BookSettingsView` automatically if `metadata.title.isEmpty && metadata.author.isEmpty`.
+
+### H3 — Validation Results Have No "Fix It" Deep Links
+**File:** `src/views/ValidationResultsView.swift`
+**Issue:** Tapping a validation error (e.g., "Missing required field: title") does nothing. Users must dismiss the sheet, navigate to settings, and find the relevant field themselves.
+
+**Fix:** Make error rows tappable. Errors about metadata (`Missing required field: title/author`) should dismiss the sheet and open `BookSettingsView`. Errors about content should navigate to the relevant chapter.
+
+---
+
+## MEDIUM Issues
+
+### M1 — TTS Player Lacks Chapter Context
+**File:** `src/views/TTSPlayerView.swift:56-65`
+**Issue:** "Now Playing" only shows when TTS is actively playing. When the user opens the TTS sheet before pressing play, there's no indication of which chapter will be read. A static "Will read: [chapter title]" label when idle would orient users.
+
+### M2 — Export Flow Doesn't Prompt to Validate First
+**File:** `src/views/ContentView.swift:92-105`
+**Issue:** Users can export directly without validating. KDP will reject uploads with missing metadata. The export menu should suggest validation:
 ```
+Export for KDP
+  ↳ Consider validating first (tap to validate)
+```
+Or simply run validation silently before export and surface blocking errors before generating the file.
 
-This is a solid, linear workflow. Unlike a game, there's no need for artificial retention loops — the value is professional. But the current implementation **breaks the loop at every handoff**.
+### M3 — No Visual Confirmation After Auto-save
+**Issue:** Auto-save fires 3 seconds after any change but the status bar only shows "Unsaved" vs "Saved" based on `hasUnsavedChanges`. Since auto-save doesn't set `hasUnsavedChanges = false` (it's not a user-initiated save), the status bar stays "Unsaved" even when a perfectly good auto-save exists.
+**Fix:** Auto-save should update a separate `@Published var lastAutoSaveDate: Date?` and show "Auto-saved" with a timestamp.
 
----
+### M4 — Chapter Reorder Has No Undo
+**Issue:** Drag-to-reorder in `ChapterListView` calls `moveChapters(from:to:)` which immediately modifies the model. There's no undo. On a phone with fat-finger touches, accidental reorders are a real risk.
+**Fix:** Expose SwiftUI's built-in `UndoManager` via the environment and register chapter moves.
 
-## CRITICAL FLOW ISSUES
-
-### CF1 — No Onboarding: First Launch is a Blank White Box
-**Severity:** CRITICAL
-
-New users launch the app and see an empty `NSTextView` (or its iOS equivalent). No introduction, no tutorial, no template, no hint about what to do next.
-
-**What professional iOS writing apps do:**
-- iA Writer: Shows template picker on first launch
-- Ulysses: Shows "Getting Started" sheet
-- Apple Notes: Auto-creates a welcome note
-
-**Required for iOS launch:**
-1. First-launch modal: "Welcome to Avant Garde — Start writing your book"
-2. Template picker: "Fiction Novel" / "Non-fiction Book" / "Blank"
-3. Brief 3-step onboarding: "Write → Validate → Export"
-4. Persistent empty-state hint: "Tap to start writing Chapter 1"
+### M5 — No Chapter Duplication
+**Issue:** Authors frequently want to duplicate a chapter as a template (especially for recurring structure like chapters with standard headings). Only add and delete are exposed.
+**Fix:** Add "Duplicate Chapter" to the swipe actions alongside delete.
 
 ---
 
-### CF2 — The Three Best Features Are Invisible
-**Severity:** CRITICAL
+## LOW Issues
 
-On macOS, the app's three killer features are buried:
-- **12 Writing Themes**: View menu → Color Themes submenu (3 clicks, never discovered)
-- **TTS Proofing**: Audio menu → Play Current Chapter (users don't know this exists)
-- **Dual Export**: File menu (users assume "Export" means one format)
+### L1 — Statistics Only Show Totals, Not Per-Chapter Progress
+The status bar shows total word count. During writing, authors want to know "how long is THIS chapter?" The per-chapter word count in `ChapterRow` exists in the sidebar but disappears when the sidebar collapses on iPhone.
 
-On iPhone, **there is no menu bar**. All these features must be surfaced in the UI.
+### L2 — No Reading Goal / Target Word Count
+Authors typically write toward a target (80,000 words for a novel). A progress indicator toward a user-set goal would drive engagement.
 
-**Required iOS feature surfacing:**
-| Feature | Current (macOS) | Required (iOS) |
-|---------|----------------|----------------|
-| Themes | View menu | Persistent button in navigation bar with visual preview |
-| TTS | Audio menu | Always-visible ▶/⏸ controls at bottom |
-| KDP Export | File menu | Export FAB or prominent toolbar button |
-| Google Export | File menu | Same export sheet, second option |
-| Validation | Toolbar (2 buttons) | Inline status with tap-to-detail |
+### L3 — Theme Recommendation Not Surfaced
+`ColorThemeManager.recommendTheme(for:)` and `themeForTimeOfDay()` exist but are never called from the UI. These are genuinely useful features that are completely hidden.
 
 ---
 
-### CF3 — Chapter Navigation Is Not Connected to the Editor
-**Severity:** CRITICAL
-**File:** `src/ui/EditorWindowController.swift:367-375, 479-486`
+## Engagement Score by Area
 
-The chapter sidebar (`NSTableView`) shows chapters, but:
-1. Selecting a chapter in the table does NOT navigate to it in the text view
-2. "Insert Chapter Break" (`insertChapter()`) inserts literal text `"--- Chapter Break ---"` into the `NSTextView`, but does NOT create a new `Chapter` in `document.chapters`
-3. Tapping "Add Chapter" creates a chapter in the data model but doesn't scroll the editor to it
-
-**Result:** The chapter list and the editor text are in two separate, disconnected states. The author's fundamental workflow — organizing chapters and jumping between them — is broken.
-
-**Required fix for iOS:**
-- Each chapter gets its own `UITextView` (or SwiftUI `TextEditor`)
-- Selecting a chapter in the sidebar navigates to that chapter's content
-- "Insert Chapter Break" creates a new chapter in the model and opens it for editing
-- Chapter content is saved back to the model on every edit (live sync)
-
----
-
-### CF4 — Save/Export Flow Doesn't Match iOS Mental Model
-**Severity:** CRITICAL
-**Files:** `EbookConverterApp.swift:295-368, 379-501`
-
-**macOS save flow:** Manual save → NSSavePanel → write to disk → NSAlert "Document Saved"
-**iOS mental model:** Automatic saving (iCloud/local), no "save" action required
-**iOS export flow:** Tap "Share" → `UIActivityViewController` → AirDrop/Files/Email
-
-The current flow requires the user to:
-1. Manually save (Cmd+S)
-2. Then separately export (Cmd+K / Cmd+G)
-3. Then choose a file location
-
-On iOS, this should be:
-1. Auto-save happens continuously (as the user types)
-2. "Export" opens a share sheet with KDP HTML and EPUB options
-3. User sends to Files, AirDrop, or email directly
-
----
-
-## HIGH FLOW ISSUES
-
-### HF1 — Statistics Are on Demand, Not Ambient
-**File:** `src/ui/EditorWindowController.swift:613-639`
-
-Calling `toggleStatistics()` shows an `NSAlert` with word count. The sidebar labels exist but never update (only called on `addChapter()`).
-
-**Authors love live stats.** Word count per chapter, daily goal tracking, estimated reading time — these should be permanently visible at the bottom of the screen, updating as the user types.
-
-**Required:** Always-visible stats bar (word count, chapter count, reading time). Consider a session word count ("Today: +1,240 words") for motivation.
-
----
-
-### HF2 — TTS Playback Has No Visual Feedback
-**File:** `src/ui/EditorWindowController.swift:574-589`
-
-When the user taps "Play", a `TextToSpeech` starts speaking, then an `NSAlert` appears saying "Text-to-speech playback has started." The alert blocks the UI. There's no word highlighting, no progress bar, no elapsed time display.
-
-**For iOS, TTS should work like Apple Books:**
-- Text highlighting moves with the spoken word (`speechProgress` delegate is already implemented in TextToSpeech.swift — just needs to be connected)
-- Mini-player at bottom with play/pause/speed controls
-- No blocking modal
-
----
-
-### HF3 — No Chapter Reordering on iOS
-**File:** `src/models/EbookDocument.swift:108-114`
-
-`EbookDocument.moveChapter()` exists but no UI exposes it. On macOS, the NSTableView could support drag-and-drop reordering (but it's not implemented). On iOS, this is critical.
-
-**Required:** `UITableView` with `moveRow(at:to:)` enabled, or SwiftUI `List` with `.onMove` modifier. Chapter reordering is a core authoring workflow.
-
----
-
-### HF4 — No Chapter Deletion UI
-**File:** `src/models/EbookDocument.swift:103-106`
-
-`EbookDocument.removeChapter()` exists but no UI calls it. There's no way for the user to delete a chapter.
-
-**Fix:** iOS swipe-to-delete on the chapter list, with a confirmation alert.
-
----
-
-### HF5 — Theme System Is Underutilized
-**File:** `src/ui/ColorThemeManager.swift:227-257`
-
-`recommendThemeForWritingType()` and `getThemeForTimeOfDay()` are implemented but never called. The app has a genuinely interesting feature — automatic theme recommendations based on genre and time of day — that no user will ever discover.
-
-**Fix for iOS:**
-1. During onboarding: "What are you writing?" → auto-set theme
-2. Theme selector shows genre + time-of-day recommendation badge
-3. Optional: prompt to switch themes at different times of day
-
----
-
-## MEDIUM FLOW ISSUES
-
-### MF1 — Book Metadata Has No UI
-**File:** `src/models/EbookDocument.swift:15-36`
-
-`BookMetadata` has title, author, description, ISBN, publisher, publication date, genre, language, rights, subject. The user can set none of these — there's no metadata editing UI. But both KDP and Google validators check for title and author.
-
-**Fix:** "Book Settings" sheet (title, author, description, ISBN), accessible from navigation bar or settings. Required before export.
-
----
-
-### MF2 — Validation Results Are Non-Actionable
-**File:** `src/ui/EditorWindowController.swift:556-572`
-
-Validation shows an `NSAlert` with a list of error strings. There's no way to tap an error and jump to the problem location, no in-editor highlighting of problematic text, no inline suggestions.
-
-**Fix:** Validation results as a side panel or sheet with tappable issues that highlight the relevant text.
-
----
-
-### MF3 — "Insert Footnote" Inserts `[Footnote: ]` as Raw Text
-**File:** `src/ui/EditorWindowController.swift:517-528`
-
-Footnotes are critical for non-fiction authors. The current implementation inserts `[Footnote: ]` as literal bracket text. KDP and EPUB both have proper footnote formatting. This is a data fidelity problem.
-
----
-
-### MF4 — No Image Flow on iOS
-**File:** `src/ui/EditorWindowController.swift:488-514`
-
-`insertImage()` uses `NSOpenPanel` — AppKit only. On iOS, image insertion requires `UIImagePickerController` or `PHPickerViewController`. The image resizing logic (line 504-509) uses `NSImage` which is also AppKit-only.
-
----
-
-## ENGAGEMENT RETENTION ANALYSIS
-
-**What keeps authors coming back:**
-- Daily writing streaks (not implemented)
-- Word count goals (not implemented)
-- Chapter completion status (not implemented)
-- Export history ("You exported 3 chapters last week") (not implemented)
-
-**What Avant Garde does well for engagement:**
-- 12 themes for mood-matched writing environment (great feature, poor discovery)
-- TTS proofing encourages review passes (good workflow, poor UX)
-- Dual-platform export is a genuine time-saver (core differentiator)
-
-**Recommendation:** For iOS v1.0, focus on the core loop (Write → TTS Review → Export). Writing streak and goal features can be v1.1.
-
----
-
-## FEATURE PRIORITY FOR iOS v1.0
-
-| Feature | Status | Priority |
-|---------|--------|----------|
-| Write text in chapters | Broken (disconnected model) | P0 |
-| Navigate between chapters | Broken (no selection handler) | P0 |
-| Auto-save document | Missing | P0 |
-| Export to KDP HTML | Works (core logic) | P0 |
-| Export to Google EPUB | Works (core logic) | P0 |
-| Choose writing theme | Works (UI buried) | P1 |
-| TTS chapter playback | Works (poor UX) | P1 |
-| Book metadata entry | Missing (no UI) | P1 |
-| Chapter reordering | Logic exists, no UI | P1 |
-| Chapter deletion | Logic exists, no UI | P1 |
-| Validation results with jump-to | Works (poor UX) | P2 |
-| Onboarding | Missing | P1 |
-| Word count stats (live) | Broken (never updates) | P1 |
-| Daily writing goals | Missing | P2 (v1.1) |
-| Writing streaks | Missing | P2 (v1.1) |
-| Footnote proper formatting | Stub | P2 |
-| Image insertion (iOS) | Broken (AppKit) | P2 |
+| Area | Before | After |
+|------|--------|-------|
+| Core write loop | 2/10 | 9/10 |
+| Chapter navigation | 3/10 | 9/10 |
+| Theme experience | 3/10 | 8/10 |
+| TTS experience | 4/10 | 7/10 |
+| Export experience | 2/10 | 7/10 |
+| Onboarding | 1/10 | 2/10 |
+| Document management | 2/10 | 3/10 |
+| **Overall** | **5/10** | **7/10** |

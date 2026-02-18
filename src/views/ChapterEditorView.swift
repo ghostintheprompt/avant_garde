@@ -49,7 +49,7 @@ private struct EditorContent: View {
                 .padding(.horizontal, 24)
                 .padding(.top, 20)
                 .padding(.bottom, 12)
-                .onChange(of: titleText) { _, newValue in
+                .onChange(of: titleText) { newValue in
                     viewModel.updateChapterTitle(newValue, for: chapterID)
                 }
 
@@ -65,7 +65,7 @@ private struct EditorContent: View {
                 .padding(.horizontal, 20)
                 .padding(.vertical, 12)
                 .focused($bodyFocused)
-                .onChange(of: bodyText) { _, newValue in
+                .onChange(of: bodyText) { newValue in
                     viewModel.updateChapterContent(newValue, for: chapterID)
                 }
         }
