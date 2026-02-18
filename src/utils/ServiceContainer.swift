@@ -107,8 +107,6 @@ class ServiceContainer {
         registerFactory(AudioController.self) { AudioController() }
         registerFactory(KDPConverter.self) { KDPConverter() }
         registerFactory(GoogleConverter.self) { GoogleConverter() }
-        registerFactory(FormattingEngine.self) { FormattingEngine() }
-        registerFactory(EbookParser.self) { EbookParser() }
         Logger.info("Default services registered", category: .general)
     }
 

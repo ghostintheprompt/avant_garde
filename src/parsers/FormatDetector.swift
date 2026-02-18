@@ -84,7 +84,7 @@ class FormatDetector {
         }
 
         // Check for KDP format markers (if any specific pattern exists)
-        if isKDP(headerData: headerData) {
+        if isKDP(headerData) {
             return .kdp
         }
 

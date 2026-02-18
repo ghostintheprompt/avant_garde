@@ -10,6 +10,14 @@ struct ChapterListView: View {
             ForEach(viewModel.document.chapters) { chapter in
                 ChapterRow(chapter: chapter)
                     .tag(chapter.id)
+                    .swipeActions(edge: .leading, allowsFullSwipe: true) {
+                        Button {
+                            viewModel.duplicateChapter(id: chapter.id)
+                        } label: {
+                            Label("Duplicate", systemImage: "doc.on.doc")
+                        }
+                        .tint(.blue)
+                    }
                     .swipeActions(edge: .trailing, allowsFullSwipe: false) {
                         Button(role: .destructive) {
                             viewModel.deleteChapter(id: chapter.id)

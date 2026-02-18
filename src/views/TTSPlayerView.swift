@@ -6,6 +6,7 @@ struct TTSPlayerView: View {
     @Environment(\.dismiss) var dismiss
 
     @State private var speechRate: Float = 0.5
+    @State private var speechVolume: Float = 1.0
     @State private var selectedVoice: VoiceOption?
 
     private var tts: TextToSpeech { ServiceContainer.shared.textToSpeech }
@@ -13,66 +14,11 @@ struct TTSPlayerView: View {
     var body: some View {
         NavigationStack {
             List {
-                // MARK: Player Controls
-                Section {
-                    PlayerControlsRow()
-                }
-
-                // MARK: Now Playing
-                if let title = nowPlayingTitle {
-                    Section("Now Playing") {
-                        Label(title, systemImage: "waveform")
-                            .foregroundStyle(.primary)
-                    }
-                }
-
-                // MARK: Speed
-                Section("Speed") {
-                    VStack(alignment: .leading, spacing: 4) {
-                        HStack {
-                            Text("Reading Speed")
-                            Spacer()
-                            Text(speedLabel(speechRate))
-                                .foregroundStyle(.secondary)
-                                .monospacedDigit()
-                        }
-                        Slider(value: $speechRate, in: 0.1...1.0, step: 0.05)
-                            .onChange(of: speechRate) { rate in
-                                viewModel.setTTSRate(rate)
-                            }
-                    }
-                }
-
-                // MARK: Voice Selection
-                Section("Voice") {
-                    let voices = viewModel.availableVoices.filter { $0.language.hasPrefix("en") }
-                    if voices.isEmpty {
-                        Text("No English voices available")
-                            .foregroundStyle(.secondary)
-                    } else {
-                        ForEach(voices, id: \.voice.identifier) { voice in
-                            Button {
-                                selectedVoice = voice
-                                viewModel.setTTSVoice(voice)
-                            } label: {
-                                HStack {
-                                    VStack(alignment: .leading, spacing: 2) {
-                                        Text(voice.displayName)
-                                            .foregroundStyle(.primary)
-                                        Text(voice.language)
-                                            .font(.caption)
-                                            .foregroundStyle(.secondary)
-                                    }
-                                    Spacer()
-                                    if selectedVoice?.voice.identifier == voice.voice.identifier {
-                                        Image(systemName: "checkmark")
-                                            .foregroundStyle(.accentColor)
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
+                Section { PlayerControlsRow() }
+                nowPlayingSection
+                speedSection
+                volumeSection
+                voiceSection
             }
             .navigationTitle("Listen")
             .navigationBarTitleDisplayMode(.inline)
@@ -83,10 +29,81 @@ struct TTSPlayerView: View {
             }
             .onAppear {
                 speechRate = tts.currentRate
+                speechVolume = tts.currentVolume
                 selectedVoice = tts.getCurrentVoice()
             }
         }
     }
+
+    // MARK: - Sections
+
+    @ViewBuilder
+    private var nowPlayingSection: some View {
+        if let title = nowPlayingTitle {
+            Section("Now Playing") {
+                Label(title, systemImage: "waveform")
+                    .foregroundStyle(.primary)
+            }
+        }
+    }
+
+    private var speedSection: some View {
+        Section("Speed") {
+            VStack(alignment: .leading, spacing: 4) {
+                HStack {
+                    Text("Reading Speed")
+                    Spacer()
+                    Text(speedLabel(speechRate))
+                        .foregroundStyle(.secondary)
+                        .monospacedDigit()
+                }
+                Slider(value: $speechRate, in: 0.1...1.0, step: 0.05)
+                    .onChange(of: speechRate) { rate in
+                        viewModel.setTTSRate(rate)
+                    }
+            }
+        }
+    }
+
+    private var volumeSection: some View {
+        Section("Volume") {
+            VStack(alignment: .leading, spacing: 4) {
+                HStack {
+                    Text("Volume")
+                    Spacer()
+                    Text("\(Int(speechVolume * 100))%")
+                        .foregroundStyle(.secondary)
+                        .monospacedDigit()
+                }
+                Slider(value: $speechVolume, in: 0.0...1.0, step: 0.05)
+                    .onChange(of: speechVolume) { volume in
+                        viewModel.setTTSVolume(volume)
+                    }
+            }
+        }
+    }
+
+    private var voiceSection: some View {
+        Section("Voice") {
+            let voices = viewModel.availableVoices.filter { $0.language.hasPrefix("en") }
+            if voices.isEmpty {
+                Text("No English voices available")
+                    .foregroundStyle(.secondary)
+            } else {
+                ForEach(voices, id: \.id) { voice in
+                    VoiceRow(
+                        voice: voice,
+                        isSelected: selectedVoice?.id == voice.id
+                    ) {
+                        selectedVoice = voice
+                        viewModel.setTTSVoice(voice)
+                    }
+                }
+            }
+        }
+    }
+
+    // MARK: - Helpers
 
     private var nowPlayingTitle: String? {
         guard viewModel.ttsIsPlaying || viewModel.ttsIsPaused else { return nil }
@@ -96,7 +113,34 @@ struct TTSPlayerView: View {
     }
 
     private func speedLabel(_ rate: Float) -> String {
-        String(format: "%.2fx", rate / 0.5) // 0.5 = 1.0x normal
+        String(format: "%.2fx", rate / 0.5)
+    }
+}
+
+// MARK: - Voice Row
+
+private struct VoiceRow: View {
+    let voice: VoiceOption
+    let isSelected: Bool
+    let onTap: () -> Void
+
+    var body: some View {
+        Button(action: onTap) {
+            HStack {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(voice.displayName)
+                        .foregroundStyle(.primary)
+                    Text(voice.language)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                Spacer()
+                if isSelected {
+                    Image(systemName: "checkmark")
+                        .foregroundStyle(Color.accentColor)
+                }
+            }
+        }
     }
 }
 
@@ -110,21 +154,18 @@ private struct PlayerControlsRow: View {
         HStack(spacing: 32) {
             Spacer()
 
-            // Previous chapter
             Button {
-                let prev = (viewModel.ttsCurrentChapterIndex - 1)
+                let prev = viewModel.ttsCurrentChapterIndex - 1
                 if prev >= 0 {
                     viewModel.select(chapterAt: prev)
                     viewModel.stopTTS()
                     viewModel.playTTS()
                 }
             } label: {
-                Image(systemName: "backward.fill")
-                    .font(.title2)
+                Image(systemName: "backward.fill").font(.title2)
             }
             .disabled(!viewModel.ttsIsPlaying)
 
-            // Play / Pause / Stop
             Button {
                 if viewModel.ttsIsPlaying && !viewModel.ttsIsPaused {
                     viewModel.pauseTTS()
@@ -141,7 +182,6 @@ private struct PlayerControlsRow: View {
                     .foregroundStyle(.white)
             }
 
-            // Next chapter
             Button {
                 let next = viewModel.ttsCurrentChapterIndex + 1
                 if next < viewModel.document.chapters.count {
@@ -150,8 +190,7 @@ private struct PlayerControlsRow: View {
                     viewModel.playTTS()
                 }
             } label: {
-                Image(systemName: "forward.fill")
-                    .font(.title2)
+                Image(systemName: "forward.fill").font(.title2)
             }
             .disabled(!viewModel.ttsIsPlaying)
 
@@ -161,8 +200,7 @@ private struct PlayerControlsRow: View {
     }
 
     private var playPauseIcon: String {
-        if viewModel.ttsIsPlaying && !viewModel.ttsIsPaused { return "pause.fill" }
-        return "play.fill"
+        viewModel.ttsIsPlaying && !viewModel.ttsIsPaused ? "pause.fill" : "play.fill"
     }
 }
 

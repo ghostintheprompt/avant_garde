@@ -1,0 +1,115 @@
+name: AvantGarde
+
+options:
+  bundleIdPrefix: com.avantgarde
+  deploymentTarget:
+    iOS: "16.0"
+  xcodeVersion: "16.0"
+  generateEmptyDirectories: false
+  defaultConfig: Debug
+  groupSortPosition: none
+  createIntermediateGroups: true
+
+settings:
+  base:
+    SWIFT_VERSION: "5.9"
+    IPHONEOS_DEPLOYMENT_TARGET: "16.0"
+    TARGETED_DEVICE_FAMILY: "1,2"
+    MARKETING_VERSION: "1.0"
+    CURRENT_PROJECT_VERSION: "1"
+    ENABLE_BITCODE: NO
+    DEBUG_INFORMATION_FORMAT: dwarf-with-dsym
+    SWIFT_TREAT_WARNINGS_AS_ERRORS: NO
+
+targets:
+
+  AvantGarde:
+    type: application
+    platform: iOS
+    deploymentTarget: "16.0"
+    sources:
+      - path: src
+        excludes:
+          - "**/*.md"
+    resources:
+      - path: Resources/Assets.xcassets
+      - path: Resources/Info.plist
+        buildPhase: none
+      - path: Resources/PrivacyInfo.xcprivacy
+    info:
+      path: Resources/Info.plist
+      properties:
+        CFBundleDisplayName: Avant Garde
+        CFBundleIcons:
+          CFBundlePrimaryIcon:
+            CFBundleIconFiles: [AppIcon]
+            UIPrerenderedIcon: false
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+        "UISupportedInterfaceOrientations~ipad":
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationPortraitUpsideDown
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
+        UILaunchScreen: {}
+        UIApplicationSceneManifest:
+          UIApplicationSupportsMultipleScenes: true
+          UISceneConfigurations: {}
+        NSSpeechRecognitionUsageDescription: "Avant Garde reads your chapters aloud so you can review your manuscript hands-free."
+        NSMicrophoneUsageDescription: "Avant Garde uses the microphone for text-to-speech voice preview only. No audio is recorded."
+        UIRequiredDeviceCapabilities: [arm64]
+        UIFileSharingEnabled: true
+        LSSupportsOpeningDocumentsInPlace: true
+        NSHumanReadableCopyright: "© 2026 Avant Garde"
+        ITSAppUsesNonExemptEncryption: false
+    entitlements:
+      path: Resources/AvantGarde.entitlements
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.avantgarde.authoring
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
+        INFOPLIST_FILE: Resources/Info.plist
+        CODE_SIGN_ENTITLEMENTS: Resources/AvantGarde.entitlements
+        DEVELOPMENT_TEAM: ""
+      configs:
+        Debug:
+          DEBUG_INFORMATION_FORMAT: dwarf
+          SWIFT_OPTIMIZATION_LEVEL: "-Onone"
+          SWIFT_ACTIVE_COMPILATION_CONDITIONS: DEBUG
+        Release:
+          SWIFT_OPTIMIZATION_LEVEL: "-O"
+          VALIDATE_PRODUCT: YES
+
+  AvantGardeTests:
+    type: bundle.unit-test
+    platform: iOS
+    deploymentTarget: "16.0"
+    sources:
+      - path: Tests
+    dependencies:
+      - target: AvantGarde
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.avantgarde.authoring.tests
+
+schemes:
+  AvantGarde:
+    build:
+      targets:
+        AvantGarde: all
+        AvantGardeTests: [test]
+    run:
+      config: Debug
+    test:
+      config: Debug
+      targets:
+        - name: AvantGardeTests
+          parallelizable: true
+          randomExecutionOrder: true
+    profile:
+      config: Release
+    analyze:
+      config: Debug
+    archive:
+      config: Release

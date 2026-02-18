@@ -47,6 +47,13 @@ class DocumentViewModel: ObservableObject {
     @Published var exportedData: ExportedFile?
     @Published var showExportSheet: Bool = false
 
+    // Pre-export validation warning state
+    @Published var showExportValidationAlert: Bool = false
+    @Published var exportValidationErrors: [String] = []
+    private var pendingExportTarget: ExportTarget?
+
+    enum ExportTarget { case kdp, google }
+
     @Published var validationReport: ValidationReport?
     @Published var showValidationSheet: Bool = false
 
@@ -148,6 +155,17 @@ class DocumentViewModel: ObservableObject {
         markDirty()
     }
 
+    func duplicateChapter(id: UUID) {
+        guard let index = document.chapters.firstIndex(where: { $0.id == id }) else { return }
+        objectWillChange.send()
+        var copy = document.chapters[index]
+        copy = Chapter(title: copy.title + " (Copy)", content: copy.content)
+        document.chapters.insert(copy, at: index + 1)
+        selectedChapterID = copy.id
+        refreshStats()
+        markDirty()
+    }
+
     func moveChapters(from source: IndexSet, to destination: Int) {
         objectWillChange.send()
         document.chapters.move(fromOffsets: source, toOffset: destination)
@@ -231,6 +249,39 @@ class DocumentViewModel: ObservableObject {
 
     func exportKDP() async {
         guard !isExporting else { return }
+        let report = document.validateForKDP()
+        if !report.errors.isEmpty {
+            exportValidationErrors = report.errors
+            pendingExportTarget = .kdp
+            showExportValidationAlert = true
+            return
+        }
+        await performExportKDP()
+    }
+
+    func exportGoogle() async {
+        guard !isExporting else { return }
+        let report = document.validateForGoogle()
+        if !report.errors.isEmpty {
+            exportValidationErrors = report.errors
+            pendingExportTarget = .google
+            showExportValidationAlert = true
+            return
+        }
+        await performExportGoogle()
+    }
+
+    /// Called when user confirms "Export Anyway" from the validation alert.
+    func confirmExportDespiteErrors() async {
+        guard let target = pendingExportTarget else { return }
+        pendingExportTarget = nil
+        switch target {
+        case .kdp: await performExportKDP()
+        case .google: await performExportGoogle()
+        }
+    }
+
+    private func performExportKDP() async {
         isExporting = true
         exportError = nil
         do {
@@ -244,8 +295,7 @@ class DocumentViewModel: ObservableObject {
         isExporting = false
     }
 
-    func exportGoogle() async {
-        guard !isExporting else { return }
+    private func performExportGoogle() async {
         isExporting = true
         exportError = nil
         do {
@@ -313,6 +363,10 @@ class DocumentViewModel: ObservableObject {
 
     func setTTSVoice(_ voice: VoiceOption) {
         audioController.setVoice(voice)
+    }
+
+    func setTTSVolume(_ volume: Float) {
+        audioController.setSpeechVolume(volume)
     }
 
     var availableVoices: [VoiceOption] {

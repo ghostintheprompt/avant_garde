@@ -1,7 +1,8 @@
 import Foundation
 import AVFoundation
 
-struct VoiceOption {
+struct VoiceOption: Identifiable {
+    var id: String { voice.identifier }
     let voice: AVSpeechSynthesisVoice
     let displayName: String
     let language: String

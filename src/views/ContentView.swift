@@ -64,6 +64,17 @@ struct ContentView: View {
             }
         }
         // ---- Alerts ----
+        .alert("Validation Issues", isPresented: $viewModel.showExportValidationAlert) {
+            Button("Export Anyway", role: .destructive) {
+                Task { await viewModel.confirmExportDespiteErrors() }
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            let errors = viewModel.exportValidationErrors
+            Text(errors.count == 1
+                ? errors[0]
+                : "\(errors.count) errors must be fixed:\n" + errors.prefix(3).joined(separator: "\n"))
+        }
         .alert("Export Error", isPresented: .constant(viewModel.exportError != nil)) {
             Button("OK") { viewModel.exportError = nil }
         } message: {
