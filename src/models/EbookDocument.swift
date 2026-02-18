@@ -1,10 +1,9 @@
 import Foundation
-import AppKit
 
-struct Chapter: Codable {
+struct Chapter: Codable, Identifiable {
+    var id: UUID = UUID()
     var title: String
     var content: String
-    var id: UUID = UUID()
 
     init(title: String, content: String) {
         self.title = title
@@ -22,18 +21,19 @@ struct BookMetadata: Codable {
     var genre: String = ""
     var language: String = "en"
     var coverImagePath: String = ""
-
-    // Additional EPUB/KDP metadata fields
     var publisher: String = ""
     var rights: String = "All rights reserved"
-    var subject: String = ""  // Topic/category
+    var subject: String = ""
 
-    /// Returns the publication date formatted for EPUB metadata (YYYY-MM-DD)
     var publicationDate: String {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "yyyy-MM-dd"
-        return formatter.string(from: publishDate)
+        return BookMetadata.dateFormatter.string(from: publishDate)
     }
+
+    private static let dateFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.dateFormat = "yyyy-MM-dd"
+        return f
+    }()
 }
 
 struct FormattingRules: Codable {
@@ -48,50 +48,37 @@ struct FormattingRules: Codable {
     var chapterStartsNewPage: Bool = true
 }
 
-class EbookDocument: NSDocument {
-    var chapters: [Chapter] = []
-    var metadata: BookMetadata = BookMetadata()
-    var formatting: FormattingRules = FormattingRules()
-    
-    override init() {
-        super.init()
-        // Create a default first chapter
-        chapters.append(Chapter(title: "Chapter 1", content: ""))
+// MARK: - EbookDocument (plain class — no NSDocument dependency)
+
+class EbookDocument {
+    var chapters: [Chapter]
+    var metadata: BookMetadata
+    var formatting: FormattingRules
+
+    init() {
+        chapters = [Chapter(title: "Chapter 1", content: "")]
+        metadata = BookMetadata()
+        formatting = FormattingRules()
     }
-    
-    override class var autosavesInPlace: Bool {
-        return true
-    }
-    
-    override func makeWindowControllers() {
-        let storyboard = NSStoryboard(name: NSStoryboard.Name("Main"), bundle: nil)
-        if let windowController = storyboard.instantiateController(withIdentifier: NSStoryboard.SceneIdentifier("DocumentWindowController")) as? NSWindowController {
-            self.addWindowController(windowController)
-        }
-    }
-    
-    override func data(ofType typeName: String) throws -> Data {
-        // Serialize the document to data
-        let documentData = DocumentData(
-            chapters: chapters,
-            metadata: metadata,
-            formatting: formatting
-        )
-        
+
+    // MARK: - Serialization
+
+    func toData() throws -> Data {
+        let documentData = DocumentData(chapters: chapters, metadata: metadata, formatting: formatting)
         return try JSONEncoder().encode(documentData)
     }
-    
-    override func read(from data: Data, ofType typeName: String) throws {
-        // Deserialize the document from data
+
+    static func from(data: Data) throws -> EbookDocument {
         let documentData = try JSONDecoder().decode(DocumentData.self, from: data)
-        
-        chapters = documentData.chapters
-        metadata = documentData.metadata
-        formatting = documentData.formatting
+        let doc = EbookDocument()
+        doc.chapters = documentData.chapters
+        doc.metadata = documentData.metadata
+        doc.formatting = documentData.formatting
+        return doc
     }
-    
+
     // MARK: - Chapter Management
-    
+
     func addChapter(title: String = "", content: String = "") {
         let newChapter = Chapter(
             title: title.isEmpty ? "Chapter \(chapters.count + 1)" : title,
@@ -99,90 +86,54 @@ class EbookDocument: NSDocument {
         )
         chapters.append(newChapter)
     }
-    
+
     func removeChapter(at index: Int) {
         guard index >= 0 && index < chapters.count else { return }
         chapters.remove(at: index)
     }
-    
+
     func moveChapter(from sourceIndex: Int, to destinationIndex: Int) {
         guard sourceIndex >= 0 && sourceIndex < chapters.count &&
               destinationIndex >= 0 && destinationIndex < chapters.count else { return }
-        
         let chapter = chapters.remove(at: sourceIndex)
         chapters.insert(chapter, at: destinationIndex)
     }
-    
-    // MARK: - Export Functions
 
-    /// Asynchronously exports document to Amazon KDP format
-    /// - Returns: KDP-formatted data
-    /// - Throws: ConversionError if export fails
+    // MARK: - Export
+
     func exportToKDP() async throws -> Data {
-        let kdpConverter = KDPConverter()
-        return try await kdpConverter.convertToKDP(document: self)
+        return try await KDPConverter().convertToKDP(document: self)
     }
 
-    /// Asynchronously exports document to Google Play Books format
-    /// - Returns: EPUB-formatted data for Google Play
-    /// - Throws: ConversionError if export fails
     func exportToGoogle() async throws -> Data {
-        let googleConverter = GoogleConverter()
-        return try await googleConverter.convertToGoogle(document: self)
+        return try await GoogleConverter().convertToGoogle(document: self)
     }
 
-    /// Asynchronously exports document to standard EPUB format
-    /// - Returns: EPUB-formatted data
-    /// - Throws: ConversionError if export fails
-    func exportToEPUB() async throws -> Data {
-        // EPUB export implementation
-        return try await Task {
-            let epubData = generateEPUBData()
-            return epubData
-        }.value
-    }
-    
-    private func generateEPUBData() -> Data {
-        // Basic EPUB structure generation
-        let content = chapters.map { "\($0.title)\n\n\($0.content)" }.joined(separator: "\n\n---\n\n")
-        return content.data(using: .utf8) ?? Data()
-    }
-    
     // MARK: - Validation
-    
-    func validateForPlatform(_ platform: PublishingPlatform) -> [ValidationError] {
-        // Use ServiceContainer for dependency
-        let formattingEngine = ServiceContainer.shared.resolve(FormattingEngine.self) ?? FormattingEngine()
-        
-        let fullText = NSMutableAttributedString()
-        for chapter in chapters {
-            let chapterText = NSAttributedString(string: "\(chapter.title)\n\n\(chapter.content)\n\n")
-            fullText.append(chapterText)
-        }
-        
-        return formattingEngine.validateForPlatform(platform, text: fullText)
+
+    func validateForKDP() -> ValidationReport {
+        return ExportValidator().validate(document: self, for: .kdp)
     }
-    
+
+    func validateForGoogle() -> ValidationReport {
+        return ExportValidator().validate(document: self, for: .google)
+    }
+
     // MARK: - Statistics
-    
+
     func getWordCount() -> Int {
         return chapters.reduce(0) { total, chapter in
-            let words = chapter.content.components(separatedBy: .whitespacesAndNewlines)
-                .filter { !$0.isEmpty }
-            return total + words.count
+            total + chapter.content.components(separatedBy: .whitespacesAndNewlines).filter { !$0.isEmpty }.count
         }
     }
-    
+
     func getCharacterCount() -> Int {
-        return chapters.reduce(0) { total, chapter in
-            return total + chapter.content.count
-        }
+        return chapters.reduce(0) { $0 + $1.content.count }
     }
-    
+
     func getEstimatedReadingTime() -> TimeInterval {
         let wordCount = getWordCount()
-        let averageWordsPerMinute = 250.0
-        return TimeInterval(Double(wordCount) / averageWordsPerMinute * 60)
+        return TimeInterval(Double(wordCount) / 250.0 * 60)
     }
 }
 
@@ -193,7 +144,3 @@ struct DocumentData: Codable {
     let metadata: BookMetadata
     let formatting: FormattingRules
 }
-
-extension Chapter: Codable {}
-extension BookMetadata: Codable {}
-extension FormattingRules: Codable {}

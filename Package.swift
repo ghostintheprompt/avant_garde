@@ -1,65 +1,34 @@
-// swift-tools-version:5.7
+// swift-tools-version:5.9
 import PackageDescription
 
 let package = Package(
     name: "AvantGarde",
     platforms: [
-        .macOS(.v13)  // macOS 13.0 (Ventura) minimum - Sequoia supported
+        .iOS(.v16),
+        .macOS(.v13)
     ],
     products: [
-        .executable(name: "AvantGarde", targets: ["AvantGarde"]),
+        .library(name: "AvantGardeCore", targets: ["AvantGardeCore"]),
     ],
     dependencies: [],
     targets: [
+        // All source — cross-platform SwiftUI app (no AppKit dependencies remain)
         .target(
-            name: "AvantGarde",
-            dependencies: [
-                "Converters",
-                "Parsers",
-                "Audio",
-                "UI",
-                "Models",
-                "Editor"
-            ],
-            path: "src"
-        ),
-        .target(
-            name: "Converters",
+            name: "AvantGardeCore",
             dependencies: [],
-            path: "src/converters"
+            path: "src",
+            resources: [],
+            swiftSettings: [
+                .enableUpcomingFeature("BareSlashRegexLiterals"),
+                .enableUpcomingFeature("ConciseMagicFile"),
+            ]
         ),
-        .target(
-            name: "Parsers",
-            dependencies: [],
-            path: "src/parsers"
-        ),
-        .target(
-            name: "Audio",
-            dependencies: [],
-            path: "src/audio"
-        ),
-        .target(
-            name: "UI",
-            dependencies: [],
-            path: "src/ui"
-        ),
-        .target(
-            name: "Models",
-            dependencies: [],
-            path: "src/models"
-        ),
-        .target(
-            name: "Editor",
-            dependencies: ["Models"],
-            path: "src/editor"
-        ),
+
+        // Tests
         .testTarget(
-            name: "ConverterTests",
-            dependencies: ["Converters"]
-        ),
-        .testTarget(
-            name: "AudioTests",
-            dependencies: ["Audio"]
+            name: "AvantGardeCoreTests",
+            dependencies: ["AvantGardeCore"],
+            path: "Tests"
         ),
     ]
 )
