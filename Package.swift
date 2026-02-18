@@ -5,7 +5,6 @@ let package = Package(
     name: "AvantGarde",
     platforms: [
         .iOS(.v16),
-        .macOS(.v13)
     ],
     products: [
         .library(name: "AvantGardeCore", targets: ["AvantGardeCore"]),

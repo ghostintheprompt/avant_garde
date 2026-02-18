@@ -3,6 +3,8 @@ import SwiftUI
 struct ValidationResultsView: View {
 
     let report: ValidationReport
+    var onGoToSettings: (() -> Void)? = nil
+
     @Environment(\.dismiss) var dismiss
 
     var body: some View {
@@ -23,6 +25,15 @@ struct ValidationResultsView: View {
                         }
                     }
                     .padding(.vertical, 4)
+
+                    if hasMetadataIssues, let goToSettings = onGoToSettings {
+                        Button {
+                            dismiss()
+                            goToSettings()
+                        } label: {
+                            Label("Fix in Book Settings", systemImage: "gear")
+                        }
+                    }
                 }
 
                 // Errors
@@ -89,6 +100,12 @@ struct ValidationResultsView: View {
             }
         }
     }
+
+    // True if any issue string mentions missing metadata fields
+    private var hasMetadataIssues: Bool {
+        let all = report.errors + report.warnings + report.info
+        return all.contains { $0.localizedCaseInsensitiveContains("missing") && $0.localizedCaseInsensitiveContains("metadata") }
+    }
 }
 
 // MARK: - Issue Row
@@ -134,9 +151,11 @@ private struct IssueRow: View {
 #Preview {
     let report = ValidationReport(
         format: .kdp,
-        errors: ["Missing required field: title"],
+        errors: ["Missing required metadata: title"],
         warnings: ["Long text without chapter breaks"],
         info: ["PDF format has fewer requirements"]
     )
-    ValidationResultsView(report: report)
+    ValidationResultsView(report: report) {
+        print("Go to settings tapped")
+    }
 }

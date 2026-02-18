@@ -7,8 +7,8 @@ struct ContentView: View {
 
     @Environment(\.horizontalSizeClass) private var sizeClass
 
-    // iPhone: sheet-based import
-    @State private var showDocumentPicker = false
+    @State private var showLibrary = false
+    @AppStorage("onboardingComplete") private var onboardingComplete = false
     // iPad: sidebar starts visible; iPhone: collapses to stack
     @State private var columnVisibility: NavigationSplitViewVisibility = .automatic
 
@@ -26,6 +26,19 @@ struct ContentView: View {
         // Themed background
         .background(themeManager.currentTheme.colors.background)
         // ---- Sheets ----
+        .sheet(isPresented: $showLibrary) {
+            DocumentLibraryView()
+                .environmentObject(viewModel)
+        }
+        .fullScreenCover(isPresented: .init(
+            get: { !onboardingComplete },
+            set: { if !$0 { onboardingComplete = true } }
+        )) {
+            OnboardingView(isPresented: .init(
+                get: { !onboardingComplete },
+                set: { if !$0 { onboardingComplete = true } }
+            ))
+        }
         .sheet(isPresented: $viewModel.isShowingSettings) {
             BookSettingsView()
                 .environmentObject(viewModel)
@@ -40,7 +53,9 @@ struct ContentView: View {
         }
         .sheet(isPresented: $viewModel.showValidationSheet) {
             if let report = viewModel.validationReport {
-                ValidationResultsView(report: report)
+                ValidationResultsView(report: report) {
+                    viewModel.isShowingSettings = true
+                }
             }
         }
         .sheet(isPresented: $viewModel.showExportSheet) {
@@ -54,16 +69,6 @@ struct ContentView: View {
         } message: {
             Text(viewModel.exportError ?? "")
         }
-        // ---- Document import ----
-        .fileImporter(
-            isPresented: $showDocumentPicker,
-            allowedContentTypes: [.data],
-            allowsMultipleSelection: false
-        ) { result in
-            if case .success(let urls) = result, let url = urls.first {
-                viewModel.load(from: url)
-            }
-        }
         .toolbar {
             // Leading: document actions
             ToolbarItemGroup(placement: .topBarLeading) {
@@ -72,7 +77,7 @@ struct ContentView: View {
                         viewModel.newDocument()
                     }
                     Button("Open...", systemImage: "folder") {
-                        showDocumentPicker = true
+                        showLibrary = true
                     }
                     Divider()
                     Button("Book Settings", systemImage: "gear") {
