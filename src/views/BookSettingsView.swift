@@ -8,9 +8,8 @@ struct BookSettingsView: View {
     // Local copy — committed on Done
     @State private var metadata: BookMetadata
 
-    init() {
-        // Will be populated from environment in onAppear
-        _metadata = State(initialValue: BookMetadata())
+    init(initialMetadata: BookMetadata) {
+        _metadata = State(initialValue: initialMetadata)
     }
 
     var body: some View {
@@ -81,9 +80,6 @@ struct BookSettingsView: View {
                 }
             }
             .scrollDismissesKeyboard(.interactively)
-            .onAppear {
-                metadata = viewModel.document.metadata
-            }
         }
     }
 }
@@ -91,6 +87,6 @@ struct BookSettingsView: View {
 // MARK: - Preview
 
 #Preview {
-    BookSettingsView()
+    BookSettingsView(initialMetadata: BookMetadata())
         .environmentObject(DocumentViewModel())
 }

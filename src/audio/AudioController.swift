@@ -141,8 +141,8 @@ class AudioController: NSObject {
     }
     
     func readPreviousChapter() {
-        guard let document = currentDocument else { return }
-        
+        guard let document = currentDocument, !document.chapters.isEmpty else { return }
+
         currentChapterIndex = max(0, currentChapterIndex - 1)
         let chapter = document.chapters[currentChapterIndex]
         readChapter(chapter)

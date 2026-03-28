@@ -44,6 +44,8 @@ class DocumentViewModel: ObservableObject {
 
     @Published var isExporting: Bool = false
     @Published var exportError: String?
+    @Published var ttsError: String?
+    @Published var loadError: String?
     @Published var exportedData: ExportedFile?
     @Published var showExportSheet: Bool = false
 
@@ -235,6 +237,7 @@ class DocumentViewModel: ObservableObject {
             selectFirstChapter()
             refreshStats()
         } catch {
+            loadError = "Could not open \"\(url.deletingPathExtension().lastPathComponent)\": \(error.localizedDescription)"
             Logger.error("Load failed", error: error, category: .general)
         }
     }
@@ -421,7 +424,7 @@ extension DocumentViewModel: AudioControllerDelegate {
     nonisolated func audioError(_ error: Error) {
         Task { @MainActor [weak self] in
             self?.ttsIsPlaying = false
-            self?.exportError = error.localizedDescription
+            self?.ttsError = error.localizedDescription
         }
     }
 }

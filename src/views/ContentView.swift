@@ -40,7 +40,7 @@ struct ContentView: View {
             ))
         }
         .sheet(isPresented: $viewModel.isShowingSettings) {
-            BookSettingsView()
+            BookSettingsView(initialMetadata: viewModel.document.metadata)
                 .environmentObject(viewModel)
         }
         .sheet(isPresented: $viewModel.isShowingThemePicker) {
@@ -75,10 +75,21 @@ struct ContentView: View {
                 ? errors[0]
                 : "\(errors.count) errors must be fixed:\n" + errors.prefix(3).joined(separator: "\n"))
         }
-        .alert("Export Error", isPresented: .constant(viewModel.exportError != nil)) {
+        .alert("Export Error", isPresented: Binding(
+            get: { viewModel.exportError != nil },
+            set: { if !$0 { viewModel.exportError = nil } }
+        )) {
             Button("OK") { viewModel.exportError = nil }
         } message: {
             Text(viewModel.exportError ?? "")
+        }
+        .alert("Playback Error", isPresented: Binding(
+            get: { viewModel.ttsError != nil },
+            set: { if !$0 { viewModel.ttsError = nil } }
+        )) {
+            Button("OK") { viewModel.ttsError = nil }
+        } message: {
+            Text(viewModel.ttsError ?? "")
         }
         .toolbar {
             // Leading: document actions
@@ -182,6 +193,7 @@ struct ExportShareView: View {
     let file: ExportedFile
 
     @State private var tempURL: URL?
+    @State private var writeError: String?
 
     var body: some View {
         NavigationStack {
@@ -208,6 +220,20 @@ struct ExportShareView: View {
                         .controlSize(.large)
                     }
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
+                } else if let error = writeError {
+                    VStack(spacing: 16) {
+                        Image(systemName: "exclamationmark.triangle")
+                            .font(.system(size: 48))
+                            .foregroundStyle(.red)
+                        Text("Export Failed")
+                            .font(.headline)
+                        Text(error)
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                            .multilineTextAlignment(.center)
+                    }
+                    .padding()
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
                 } else {
                     ProgressView("Preparing export...")
                         .onAppear { writeTempFile() }
@@ -231,6 +257,7 @@ struct ExportShareView: View {
             tempURL = tmp
         } catch {
             Logger.error("Failed to write temp export file", error: error, category: .general)
+            writeError = error.localizedDescription
         }
     }
 }

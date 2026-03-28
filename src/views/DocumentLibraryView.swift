@@ -9,6 +9,7 @@ struct DocumentLibraryView: View {
     @State private var showImporter = false
     @State private var deleteTarget: URL?
     @State private var showDeleteConfirm = false
+    @State private var deleteError: String?
 
     private let fm = DocumentFileManager()
 
@@ -43,8 +44,26 @@ struct DocumentLibraryView: View {
             ) { result in
                 if case .success(let picked) = result, let url = picked.first {
                     viewModel.load(from: url)
-                    dismiss()
+                    if viewModel.loadError == nil {
+                        dismiss()
+                    }
                 }
+            }
+            .alert("Import Failed", isPresented: Binding(
+                get: { viewModel.loadError != nil },
+                set: { if !$0 { viewModel.loadError = nil } }
+            )) {
+                Button("OK") { viewModel.loadError = nil }
+            } message: {
+                Text(viewModel.loadError ?? "")
+            }
+            .alert("Delete Failed", isPresented: Binding(
+                get: { deleteError != nil },
+                set: { if !$0 { deleteError = nil } }
+            )) {
+                Button("OK") { deleteError = nil }
+            } message: {
+                Text(deleteError ?? "")
             }
             .confirmationDialog(
                 "Delete this book?",
@@ -53,7 +72,11 @@ struct DocumentLibraryView: View {
             ) {
                 Button("Delete", role: .destructive) {
                     if let url = deleteTarget {
-                        try? fm.delete(at: url)
+                        do {
+                            try fm.delete(at: url)
+                        } catch {
+                            deleteError = error.localizedDescription
+                        }
                         reload()
                     }
                 }
