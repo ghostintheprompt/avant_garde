@@ -3,11 +3,19 @@ import SwiftUI
 struct ThemePickerView: View {
 
     @EnvironmentObject var themeManager: ColorThemeManager
+    @EnvironmentObject var viewModel: DocumentViewModel
     @Environment(\.dismiss) var dismiss
 
     private let columns = [
         GridItem(.adaptive(minimum: 150, maximum: 200), spacing: 12)
     ]
+
+    private var recommendedTheme: ColorThemeManager.WritingTheme {
+        ColorThemeManager.recommendTheme(
+            for: viewModel.document.metadata.genre,
+            at: Date()
+        )
+    }
 
     var body: some View {
         NavigationStack {
@@ -16,7 +24,8 @@ struct ThemePickerView: View {
                     ForEach(ColorThemeManager.WritingTheme.allCases) { theme in
                         ThemeCard(
                             theme: theme,
-                            isSelected: themeManager.currentTheme == theme
+                            isSelected: themeManager.currentTheme == theme,
+                            isRecommended: theme == recommendedTheme
                         ) {
                             themeManager.applyTheme(theme)
                         }
@@ -42,6 +51,7 @@ private struct ThemeCard: View {
 
     let theme: ColorThemeManager.WritingTheme
     let isSelected: Bool
+    let isRecommended: Bool
     let onSelect: () -> Void
 
     var body: some View {
@@ -63,11 +73,32 @@ private struct ThemeCard: View {
                     .frame(width: 28)
                 }
                 .frame(height: 32)
+                .overlay(alignment: .topTrailing) {
+                    if isRecommended {
+                        Text("★")
+                            .font(.system(size: 14))
+                            .foregroundStyle(.yellow)
+                            .shadow(radius: 1)
+                            .offset(x: 4, y: -4)
+                    }
+                }
 
-                Text(theme.rawValue)
-                    .font(.subheadline.weight(.medium))
-                    .foregroundStyle(.primary)
-                    .lineLimit(1)
+                HStack {
+                    Text(theme.rawValue)
+                        .font(.subheadline.weight(.medium))
+                        .foregroundStyle(.primary)
+                        .lineLimit(1)
+                    
+                    if isRecommended {
+                        Spacer()
+                        Text("REC")
+                            .font(.system(size: 8, weight: .bold))
+                            .foregroundStyle(.white)
+                            .padding(.horizontal, 4)
+                            .padding(.vertical, 2)
+                            .background(Color.accentColor, in: Capsule())
+                    }
+                }
 
                 Text(theme.description)
                     .font(.caption2)

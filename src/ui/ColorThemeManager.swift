@@ -180,6 +180,27 @@ class ColorThemeManager: ObservableObject {
 
     // MARK: - Recommendations
 
+    static func recommendTheme(for genre: String, at date: Date) -> WritingTheme {
+        let g = genre.lowercased()
+        if g.contains("romance") { return .romantic }
+        if g.contains("mystery") || g.contains("thriller") || g.contains("horror") { return .mystery }
+        if g.contains("sci-fi") || g.contains("science") || g.contains("future") { return .scifi }
+        if g.contains("fantasy") || g.contains("creative") { return .creative }
+        if g.contains("academic") || g.contains("non-fiction") || g.contains("technical") { return .focused }
+        if g.contains("history") || g.contains("classic") || g.contains("period") { return .vintage }
+        if g.contains("nature") || g.contains("poetry") { return .nature }
+        
+        // Fallback to time of day
+        let hour = Calendar.current.component(.hour, from: date)
+        switch hour {
+        case 6...9: return .energetic
+        case 10...14: return .focused
+        case 15...18: return .creative
+        case 19...21: return .calm
+        default: return .mystery
+        }
+    }
+
     func recommendTheme(for writingType: WritingType) -> WritingTheme {
         switch writingType {
         case .fiction: return .creative

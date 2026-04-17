@@ -75,15 +75,26 @@ class DocumentViewModel: ObservableObject {
     private let fileManager = DocumentFileManager()
     private let audioController: AudioController
     private var autoSaveTask: Task<Void, Never>?
-    private var documentID = UUID()
+    private var documentID: UUID = UUID()
 
     private static let lastOpenURLKey = "lastOpenFileURL"
+    private static let currentDocumentIDKey = "currentDocumentID"
 
     // MARK: - Init
 
     init() {
         self.audioController = ServiceContainer.shared.audioController
         self.audioController.delegate = self
+        
+        // Restore documentID if available
+        if let idString = UserDefaults.standard.string(forKey: DocumentViewModel.currentDocumentIDKey),
+           let id = UUID(uuidString: idString) {
+            self.documentID = id
+        } else {
+            self.documentID = UUID()
+            UserDefaults.standard.set(self.documentID.uuidString, forKey: DocumentViewModel.currentDocumentIDKey)
+        }
+        
         restoreLastSession()
         selectFirstChapter()
         refreshStats()
@@ -100,6 +111,15 @@ class DocumentViewModel: ObservableObject {
                 return
             }
         }
+        
+        // Attempt recovery from auto-save if no file was restored
+        if let recovered = fileManager.loadAutoSave(for: documentID) {
+            document = recovered
+            hasUnsavedChanges = true
+            Logger.info("Recovered document from auto-save", category: .general)
+            return
+        }
+        
         Logger.info("No previous session to restore — starting fresh", category: .general)
     }
 
@@ -188,6 +208,7 @@ class DocumentViewModel: ObservableObject {
         stopTTS()
         document = EbookDocument()
         documentID = UUID()
+        UserDefaults.standard.set(documentID.uuidString, forKey: DocumentViewModel.currentDocumentIDKey)
         currentFileURL = nil
         hasUnsavedChanges = false
         UserDefaults.standard.removeObject(forKey: DocumentViewModel.lastOpenURLKey)
@@ -231,6 +252,7 @@ class DocumentViewModel: ObservableObject {
             let loaded = try fileManager.load(from: url)
             document = loaded
             documentID = UUID()
+            UserDefaults.standard.set(documentID.uuidString, forKey: DocumentViewModel.currentDocumentIDKey)
             currentFileURL = url
             hasUnsavedChanges = false
             persistLastOpenURL(url)
@@ -276,6 +298,7 @@ class DocumentViewModel: ObservableObject {
 
     /// Called when user confirms "Export Anyway" from the validation alert.
     func confirmExportDespiteErrors() async {
+        guard !isExporting else { return }
         guard let target = pendingExportTarget else { return }
         pendingExportTarget = nil
         switch target {

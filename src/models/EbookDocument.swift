@@ -3,11 +3,24 @@ import Foundation
 struct Chapter: Codable, Identifiable {
     var id: UUID = UUID()
     var title: String
-    var content: String
+    var content: String {
+        didSet {
+            updateWordCount()
+        }
+    }
+
+    private(set) var cachedWordCount: Int = 0
 
     init(title: String, content: String) {
         self.title = title
         self.content = content
+        updateWordCount()
+    }
+
+    private mutating func updateWordCount() {
+        cachedWordCount = content.components(separatedBy: .whitespacesAndNewlines)
+            .filter { !$0.isEmpty }
+            .count
     }
 }
 
@@ -122,9 +135,7 @@ class EbookDocument {
     // MARK: - Statistics
 
     func getWordCount() -> Int {
-        return chapters.reduce(0) { total, chapter in
-            total + chapter.content.components(separatedBy: .whitespacesAndNewlines).filter { !$0.isEmpty }.count
-        }
+        return chapters.reduce(0) { $0 + $1.cachedWordCount }
     }
 
     func getCharacterCount() -> Int {
