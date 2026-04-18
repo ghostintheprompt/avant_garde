@@ -18,6 +18,7 @@
 		21851C9325C4AAB483C53A43 /* DocumentFileManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 08F96B55E4D3D43E01B3B6ED /* DocumentFileManager.swift */; };
 		23708F56E06922B66E25292C /* AudioTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F97BB3D8C6678B4564EB5541 /* AudioTests.swift */; };
 		2921BCB87C16EB5145D260CE /* EbookFormat.swift in Sources */ = {isa = PBXBuildFile; fileRef = 284CE24B7C15612C376401B1 /* EbookFormat.swift */; };
+		2BBA57CA46F6FAD7ABAE14EF /* PromptVaultView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 548F585A150B8CA35C41681D /* PromptVaultView.swift */; };
 		369E71FABE92168A3DD7B999 /* TestUtilities.swift in Sources */ = {isa = PBXBuildFile; fileRef = FEEB7B0F47ACA978242C8CC1 /* TestUtilities.swift */; };
 		454F06E008D99A661DBF3254 /* ChapterListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 06E2A2503AF69366208889DA /* ChapterListView.swift */; };
 		456CBFD04420E759F6E27438 /* DocumentViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 237F332AE892FF168F57AE15 /* DocumentViewModel.swift */; };
@@ -64,6 +65,7 @@
 		3C3AB474424B67083174F917 /* UTTypeExtensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UTTypeExtensions.swift; sourceTree = "<group>"; };
 		42B0BAF9790BBDB14AEC7BE5 /* ColorThemeManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ColorThemeManager.swift; sourceTree = "<group>"; };
 		46EF78C4B63A6F4B73A75A3D /* TextToSpeech.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TextToSpeech.swift; sourceTree = "<group>"; };
+		548F585A150B8CA35C41681D /* PromptVaultView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PromptVaultView.swift; sourceTree = "<group>"; };
 		598310E15409487292AD39DA /* ExportValidator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExportValidator.swift; sourceTree = "<group>"; };
 		5D6C18222F80B2592CC8CABA /* AvantGardeApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AvantGardeApp.swift; sourceTree = "<group>"; };
 		603427328BE2FBE51BD891BC /* ServiceContainer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ServiceContainer.swift; sourceTree = "<group>"; };
@@ -130,6 +132,7 @@
 				1EAE00343CB7D0D2E4B26BFA /* ContentView.swift */,
 				D90493C2346EDDDB9E2CBA40 /* DocumentLibraryView.swift */,
 				CCE8816AA89063B89F6086B7 /* OnboardingView.swift */,
+				548F585A150B8CA35C41681D /* PromptVaultView.swift */,
 				25F8B3A9310514587AFCF3E3 /* ThemePickerView.swift */,
 				A78821D1DEACB572860DF0C1 /* TTSPlayerView.swift */,
 				D2AD62C3C95DA3BBBFEEC660 /* ValidationResultsView.swift */,
@@ -330,6 +333,7 @@
 				20E285CEC81ADB7421B8653C /* KDPConverter.swift in Sources */,
 				9F1281E544B9F2BBF892A3BA /* Logger.swift in Sources */,
 				C032C7522AC82FFEA70EDA9F /* OnboardingView.swift in Sources */,
+				2BBA57CA46F6FAD7ABAE14EF /* PromptVaultView.swift in Sources */,
 				5839E21D64E11FD2905BC340 /* ServiceContainer.swift in Sources */,
 				CA728A1AA2D5F5224B6970CF /* TTSPlayerView.swift in Sources */,
 				120B060385339495CFBCA3C4 /* TextToSpeech.swift in Sources */,
@@ -385,7 +389,7 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
@@ -404,7 +408,7 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				MACOSX_DEPLOYMENT_TARGET = 13.0;
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 1.0.1;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
@@ -472,7 +476,7 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
@@ -485,7 +489,7 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				MACOSX_DEPLOYMENT_TARGET = 13.0;
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 1.0.1;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";
