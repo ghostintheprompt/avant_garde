@@ -44,6 +44,32 @@ struct BookSettingsView: View {
                     Toggle("Enable Hyphenation", isOn: $metadata.enableHyphenation)
                 }
 
+                Section {
+                    Picker("Active Model", selection: $metadata.aiSettings.preferredModel) {
+                        ForEach(AIModel.allCases, id: \.self) { model in
+                            Text(model.rawValue).tag(model)
+                        }
+                    }
+                    
+                    if metadata.aiSettings.preferredModel != .none {
+                        SecureField("API Key", text: Binding(
+                            get: { UserDefaults.standard.string(forKey: "api_key_\(metadata.aiSettings.preferredModel.rawValue)") ?? "" },
+                            set: { UserDefaults.standard.set($0, forKey: "api_key_\(metadata.aiSettings.preferredModel.rawValue)") }
+                        ))
+                        
+                        Stepper("Max Tokens: \(metadata.aiSettings.maxTokens)", value: $metadata.aiSettings.maxTokens, in: 256...16384, step: 256)
+                        
+                        LabeledContent("Temperature") {
+                            Slider(value: $metadata.aiSettings.temperature, in: 0...1.2)
+                                .frame(width: 100)
+                        }
+                    }
+                } header: {
+                    Text("AI Lab (Alpha)")
+                } footer: {
+                    Text("Your API keys are stored locally in the macOS keychain. No data is sent to these providers unless you explicitly trigger an AI action.")
+                }
+
                 Section("Publishing Details") {
                     LabeledContent("ISBN") {
                         TextField("978-...", text: $metadata.isbn)

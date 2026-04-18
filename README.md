@@ -4,7 +4,7 @@
 
 # Avant Garde
 
-### macOS writing tool. Research-backed color psychology. Voice preview for pacing. KDP export that doesn't break.
+### macOS writing tool. Research-backed color psychology. Professional layout engine. Built for authors who ship.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Platform: macOS](https://img.shields.io/badge/Platform-macOS-lightgrey.svg)](BUILD.md)
@@ -12,21 +12,24 @@
 
 ---
 
-Avant Garde is a professional authoring environment built for authors who ship. It replaces the friction of traditional editors with a focused, scientifically-optimized workspace. No subscriptions. No telemetry. No bloat. Just the words and the tools to finish them.
+### A Note from the Author
+I’ve been writing for 30 years—from the underground zine scene to the professional grind of Hollywood, entertainment, and the game industry. Avant Garde is a labor of love born out of impatience with invasive, locked-down editors that get in the way of the work. 
 
-## Features
+This tool is for anyone who loves the raw process of putting words on a page. It’s built to be fast, atmospheric, and lethal. We’re just getting started.
 
-| Feature | Description | Benefit |
+---
+
+## Why Avant Garde?
+
+| Feature | Description | The Edge |
 |---|---|---|
-| **Professional Styles** | Live editor preview (Meridian, Serein, Vogue, etc.) | WYSIWYG experience — see exactly how your book will look |
-| **Gonzo Mode** | High-contrast mechanical typewriter aesthetic | Tactical, raw feedback for aggressive draft sessions |
-| **Color Psychology** | 13 research-backed themes (Focused, Zen, etc.) | Increases focus by 23%, boosts creativity by 31% |
-| **Voice Preview** | High-quality text-to-speech for manuscript review | Catch pacing issues and dialogue friction by listening |
-| **KDP Export** | One-click Amazon-ready HTML & Google Play EPUB | Validates formatting before delivery — no submission surprises |
-| **Chapter Manager** | Drag-and-drop reorganization | Total control over manuscript structure unlike locked editors |
-| **Local First** | Everything stays on your machine | 100% privacy, works offline, instant performance |
+| **Matte Paint Themes** | From *Meridian* cream to the aggressive *Desert Heat* (HST) and *The City* (Transmet) | Visual immersion that triggers your specific writing flow |
+| **Vellum-Grade Layout** | Live editor preview with professional "Sink" headers and Drop Caps | See your book as it will exist in the world, while you write |
+| **Gonzo Feedback** | Optional mechanical typewriter audio for tactical response | Makes every keystroke feel like a decision |
+| **AI Lab (Alpha)** | Optional hooks for Claude, Gemini, GPT, and Grok | Your own API keys, your own data, no subscriptions |
+| **Universal Imports** | Native support for .docx, .md, and .rtf | Seamlessly bridge your Google Drive/Word workflow |
 
-## Installation
+## Installation & Security
 
 ### 1. Download DMG
 Download the latest `.dmg` from the [Releases](https://github.com/ghostintheprompt/avant_garde/releases) page.
@@ -35,32 +38,18 @@ Download the latest `.dmg` from the [Releases](https://github.com/ghostintheprom
 Open the DMG and **drag Avant Garde to your Applications folder**.
 
 ### 3. Security (Gatekeeper)
-Because Avant Garde is a free, open-source tool, it is not signed by a paid Apple Developer certificate. On your first launch:
-1. **Right-click** (or Control-click) the app and select **Open**.
-2. A warning will appear; click **Open** again.
-3. You will not need to do this for future launches.
-
-### Homebrew
-```bash
-brew install --cask ghostintheprompt/tap/avant-garde
-```
-
-### Build from Source
-```bash
-git clone https://github.com/ghostintheprompt/avant_garde.git
-cd avant_garde
-./make_dmg.sh
-```
-See [BUILD.md](BUILD.md) for detailed requirements.
+Because Avant Garde is a free, open-source tool, it is not signed by a developer certificate. On your first launch:
+1. **Right-click** the app and select **Open**.
+2. Click **Open** again on the warning dialog.
 
 ## Usage
 
-1. **Smart Themes:** Select a theme based on your current task. Use *Focused Flow* for analytical editing or *Creative Burst* for drafting new chapters.
-2. **Audio Pass:** Use the "Audio" menu or the headphones icon to listen to your chapter. Adjust speed to 1.2x for a quick pacing check.
-3. **Publishing:** When ready, use `Shift + Command + K` to validate and export for KDP. The tool will highlight any formatting issues before generating the file.
+1. **Atmosphere:** Select a theme in Onboarding or the "Paintbrush" icon. Use *Desert Heat* for raw drafting or *Meridian* for final polish.
+2. **Audio Pass:** Use the "Audio" menu to listen to your chapter. It’s the fastest way to catch dialogue friction.
+3. **Publishing:** `Shift + Command + K` to export a professionally formatted KDP file. No submission surprises.
 
 ## Privacy Statement
-Avant Garde is local-only software. We do not collect telemetry, track your usage, or store your manuscripts in the cloud. Your words belong to you.
+Avant Garde is local-only software. We do not collect telemetry. If you use the AI Lab, your keys are stored in your local keychain. Your words belong to you.
 
 ---
 

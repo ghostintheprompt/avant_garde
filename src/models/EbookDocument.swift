@@ -24,6 +24,21 @@ struct Chapter: Codable, Identifiable {
     }
 }
 
+enum AIModel: String, Codable, CaseIterable {
+    case none = "Disabled"
+    case claude = "Anthropic Claude"
+    case gemini = "Google Gemini"
+    case gpt4 = "OpenAI GPT-4"
+    case grok = "xAI Grok"
+}
+
+struct AISettings: Codable {
+    var preferredModel: AIModel = .none
+    var customEndpoint: String = ""
+    var maxTokens: Int = 2048
+    var temperature: Double = 0.7
+}
+
 struct BookMetadata: Codable {
     var title: String = ""
     var author: String = ""
@@ -42,6 +57,9 @@ struct BookMetadata: Codable {
     var preset: StylePreset = .meridian
     var enableDropCaps: Bool = true
     var enableHyphenation: Bool = true
+    
+    // AI Lab Integration
+    var aiSettings: AISettings = AISettings()
 
     var publicationDate: String {
         return BookMetadata.dateFormatter.string(from: publishDate)
