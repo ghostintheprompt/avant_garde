@@ -38,6 +38,8 @@ targets:
       path: Resources/Info.plist
       properties:
         CFBundleDisplayName: Avant Garde
+        CFBundleIconFile: AppIcon
+        CFBundleIconName: AppIcon
         NSHumanReadableCopyright: "© 2026 Avant Garde"
         ITSAppUsesNonExemptEncryption: false
         LSMinimumSystemVersion: "13.0"
