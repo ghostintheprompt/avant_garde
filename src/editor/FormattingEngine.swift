@@ -1,4 +1,5 @@
 import Foundation
+import SwiftUI
 
 /// Professional Book Layout & Typography Engine
 /// Implements high-end book design techniques like Vellum/KDP but better.
