@@ -44,7 +44,7 @@ private struct EditorContent: View {
         VStack(spacing: 0) {
             // Chapter title field
             TextField("Chapter Title", text: $titleText)
-                .font(.title2.weight(.semibold))
+                .font(FormattingEngine.shared.getLiveFont(for: viewModel.document.metadata.preset, size: 24))
                 .foregroundStyle(colors.text)
                 .padding(.horizontal, 24)
                 .padding(.top, 20)
@@ -58,7 +58,7 @@ private struct EditorContent: View {
 
             // Body editor
             TextEditor(text: $bodyText)
-                .font(.system(.body, design: .serif))
+                .font(FormattingEngine.shared.getLiveBodyFont(for: viewModel.document.metadata.preset, size: 16))
                 .foregroundStyle(colors.text)
                 .scrollContentBackground(.hidden)
                 .background(colors.background)

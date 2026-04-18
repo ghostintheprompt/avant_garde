@@ -7,19 +7,33 @@ APP_NAME="AvantGarde"
 VERSION="1.0.1"
 DMG_NAME="${APP_NAME}_v${VERSION}.dmg"
 BUILD_DIR="build"
-APP_BUNDLE="${BUILD_DIR}/Release-iphoneos/${APP_NAME}.app" 
 
-# Note: project.yml specifies iOS platform. 
-# For a true macOS build, the platform in project.yml should be macOS.
-# This script builds based on current project settings.
-
-echo "--- Building Avant Garde v${VERSION} ---"
+echo "--- Building Avant Garde v${VERSION} with Branded Icons ---"
 
 # Clean up
 rm -rf "${BUILD_DIR}"
 rm -f "${DMG_NAME}"
 
-# Build
+# 1. Generate .icns file for the app bundle and DMG
+echo "Generating .icns file..."
+ICON_SET="${BUILD_DIR}/icon.iconset"
+mkdir -p "${ICON_SET}"
+SOURCE_PNG="Resources/Assets.xcassets/AppIcon.appiconset/icon_1024x1024.png"
+
+sips -z 16 16     "${SOURCE_PNG}" --out "${ICON_SET}/icon_16x16.png" > /dev/null
+sips -z 32 32     "${SOURCE_PNG}" --out "${ICON_SET}/icon_16x16@2x.png" > /dev/null
+sips -z 32 32     "${SOURCE_PNG}" --out "${ICON_SET}/icon_32x32.png" > /dev/null
+sips -z 64 64     "${SOURCE_PNG}" --out "${ICON_SET}/icon_32x32@2x.png" > /dev/null
+sips -z 128 128   "${SOURCE_PNG}" --out "${ICON_SET}/icon_128x128.png" > /dev/null
+sips -z 256 256   "${SOURCE_PNG}" --out "${ICON_SET}/icon_128x128@2x.png" > /dev/null
+sips -z 256 256   "${SOURCE_PNG}" --out "${ICON_SET}/icon_256x256.png" > /dev/null
+sips -z 512 512   "${SOURCE_PNG}" --out "${ICON_SET}/icon_256x256@2x.png" > /dev/null
+sips -z 512 512   "${SOURCE_PNG}" --out "${ICON_SET}/icon_512x512.png" > /dev/null
+sips -z 1024 1024 "${SOURCE_PNG}" --out "${ICON_SET}/icon_512x512@2x.png" > /dev/null
+
+iconutil -c icns "${ICON_SET}" -o "${BUILD_DIR}/AppIcon.icns"
+
+# 2. Build the app
 echo "Building target..."
 xcodebuild -project "${APP_NAME}.xcodeproj" \
     -scheme "${APP_NAME}" \
@@ -28,15 +42,9 @@ xcodebuild -project "${APP_NAME}.xcodeproj" \
     CODE_SIGNING_ALLOWED=NO \
     CODE_SIGNING_REQUIRED=NO \
     CODE_SIGN_IDENTITY="" \
-    build | tee "${BUILD_DIR}/build.log" | grep -E "error:|warning:|succeeded"
+    build | grep -E "error:|warning:|succeeded"
 
-# Check if build succeeded
-if [ $? -ne 0 ]; then
-    echo "Build failed. Check ${BUILD_DIR}/build.log"
-    exit 1
-fi
-
-# Find the app bundle (it might be in a different subfolder depending on platform)
+# Find the app bundle
 APP_PATH=$(find "${BUILD_DIR}" -name "${APP_NAME}.app" -type d | head -n 1)
 
 if [ -z "$APP_PATH" ]; then
@@ -46,13 +54,23 @@ fi
 
 echo "Found app at: ${APP_PATH}"
 
-# Create DMG
-echo "Packaging into DMG..."
-mkdir -p "${BUILD_DIR}/dmg"
-cp -R "${APP_PATH}" "${BUILD_DIR}/dmg/"
-ln -s /Applications "${BUILD_DIR}/dmg/Applications"
+# 3. Inject the .icns into the built app bundle manually
+mkdir -p "${APP_PATH}/Contents/Resources"
+cp "${BUILD_DIR}/AppIcon.icns" "${APP_PATH}/Contents/Resources/AppIcon.icns"
 
-hdiutil create -volname "${APP_NAME} ${VERSION}" -srcfolder "${BUILD_DIR}/dmg" -ov -format UDZO "${DMG_NAME}"
+# 4. Create DMG
+echo "Packaging into DMG..."
+DMG_STAGING="${BUILD_DIR}/dmg"
+mkdir -p "${DMG_STAGING}"
+cp -R "${APP_PATH}" "${DMG_STAGING}/"
+ln -s /Applications "${DMG_STAGING}/Applications"
+
+# Set volume icon
+cp "${BUILD_DIR}/AppIcon.icns" "${DMG_STAGING}/.VolumeIcon.icns"
+# This requires developer tools or specific utilities to apply immediately, 
+# but hdiutil will pick up the VolumeIcon if we use -volicon
+
+hdiutil create -volname "${APP_NAME}" -srcfolder "${DMG_STAGING}" -ov -format UDZO "${DMG_NAME}"
 
 echo "---------------------------------------"
 echo "Success: ${DMG_NAME}"

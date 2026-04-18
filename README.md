@@ -18,8 +18,9 @@ Avant Garde is a professional authoring environment built for authors who ship. 
 
 | Feature | Description | Benefit |
 |---|---|---|
-| **Color Psychology** | 13 research-backed themes (Gonzo, Focused, Zen, etc.) | Increases focus by 23%, boosts creativity by 31% |
+| **Professional Styles** | Live editor preview (Meridian, Serein, Vogue, etc.) | WYSIWYG experience — see exactly how your book will look |
 | **Gonzo Mode** | High-contrast mechanical typewriter aesthetic | Tactical, raw feedback for aggressive draft sessions |
+| **Color Psychology** | 13 research-backed themes (Focused, Zen, etc.) | Increases focus by 23%, boosts creativity by 31% |
 | **Voice Preview** | High-quality text-to-speech for manuscript review | Catch pacing issues and dialogue friction by listening |
 | **KDP Export** | One-click Amazon-ready HTML & Google Play EPUB | Validates formatting before delivery — no submission surprises |
 | **Chapter Manager** | Drag-and-drop reorganization | Total control over manuscript structure unlike locked editors |
@@ -27,8 +28,17 @@ Avant Garde is a professional authoring environment built for authors who ship. 
 
 ## Installation
 
-### DMG Download
+### 1. Download DMG
 Download the latest `.dmg` from the [Releases](https://github.com/ghostintheprompt/avant_garde/releases) page.
+
+### 2. Install
+Open the DMG and **drag Avant Garde to your Applications folder**.
+
+### 3. Security (Gatekeeper)
+Because Avant Garde is a free, open-source tool, it is not signed by a paid Apple Developer certificate. On your first launch:
+1. **Right-click** (or Control-click) the app and select **Open**.
+2. A warning will appear; click **Open** again.
+3. You will not need to do this for future launches.
 
 ### Homebrew
 ```bash

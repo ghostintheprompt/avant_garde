@@ -13,9 +13,7 @@ class UpdateChecker: ObservableObject {
     @Published var updateURL: URL?
     @Published var updateAvailable = false
     
-    private var currentVersion: String {
-        Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0.0"
-    }
+    private let currentVersion = "1.0.1"
     
     func checkForUpdates(isAutoCheck: Bool = false) {
         guard !isChecking else { return }

@@ -205,4 +205,34 @@ class FormattingEngine {
         formatter.numberStyle = .spellOut
         return formatter.string(from: NSNumber(value: number))?.capitalized ?? "\(number)"
     }
+
+    // MARK: - Live Preview Support
+
+    #if os(macOS)
+    func getLiveFont(for preset: StylePreset, size: CGFloat = 14) -> Font {
+        switch preset {
+        case .meridian:
+            return .custom("Playfair Display", size: size).italic()
+        case .serein:
+            return .custom("Cormorant Garamond", size: size)
+        case .oxford:
+            return .system(size: size, weight: .medium, design: .serif)
+        case .vogue:
+            return .system(size: size, weight: .light, design: .default)
+        case .legible:
+            return .system(size: size, weight: .regular, design: .monospaced)
+        }
+    }
+
+    func getLiveBodyFont(for preset: StylePreset, size: CGFloat = 14) -> Font {
+        switch preset {
+        case .meridian, .serein, .oxford:
+            return .system(size: size, weight: .regular, design: .serif)
+        case .vogue:
+            return .system(size: size, weight: .regular, design: .default)
+        case .legible:
+            return .system(size: size, weight: .regular, design: .monospaced)
+        }
+    }
+    #endif
 }
