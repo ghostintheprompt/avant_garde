@@ -121,6 +121,20 @@ private struct EditorContent: View {
                             .foregroundStyle(colors.accent)
                     }
                     
+                    Button {
+                        viewModel.isShowingPromptVault = true
+                    } label: {
+                        Label("VAULT", systemImage: "lock.shield")
+                            .font(.system(size: 9, weight: .black))
+                            .kerning(1)
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 3)
+                            .background(colors.accent.opacity(0.1))
+                            .foregroundStyle(colors.accent)
+                            .cornerRadius(4)
+                    }
+                    .buttonStyle(.plain)
+                    
                     Text(themeManager.currentTheme.rawValue.uppercased())
                         .font(.system(size: 9, weight: .black))
                         .kerning(1)

@@ -62,6 +62,7 @@ class DocumentViewModel: ObservableObject {
     @Published var isShowingThemePicker: Bool = false
     @Published var isShowingSettings: Bool = false
     @Published var isShowingTTSPlayer: Bool = false
+    @Published var isShowingPromptVault: Bool = false
 
     // MARK: - TTS State
 

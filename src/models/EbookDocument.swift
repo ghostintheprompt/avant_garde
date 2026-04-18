@@ -24,6 +24,8 @@ struct Chapter: Codable, Identifiable {
     }
 }
 
+// MARK: - AI Models
+
 enum AIModel: String, Codable, CaseIterable {
     case none = "Disabled"
     case claude = "Anthropic Claude"
@@ -38,6 +40,18 @@ struct AISettings: Codable {
     var maxTokens: Int = 2048
     var temperature: Double = 0.7
 }
+
+// MARK: - Prompt Vault
+
+struct SavedPrompt: Codable, Identifiable {
+    var id: UUID = UUID()
+    var title: String
+    var body: String
+    var category: String = "General"
+    var dateCreated: Date = Date()
+}
+
+// MARK: - Metadata
 
 struct BookMetadata: Codable {
     var title: String = ""
@@ -60,6 +74,7 @@ struct BookMetadata: Codable {
     
     // AI Lab Integration
     var aiSettings: AISettings = AISettings()
+    var promptVault: [SavedPrompt] = []
 
     var publicationDate: String {
         return BookMetadata.dateFormatter.string(from: publishDate)
@@ -137,6 +152,17 @@ class EbookDocument {
               destinationIndex >= 0 && destinationIndex < chapters.count else { return }
         let chapter = chapters.remove(at: sourceIndex)
         chapters.insert(chapter, at: destinationIndex)
+    }
+
+    // MARK: - Prompt Vault Management
+
+    func addPrompt(title: String, body: String, category: String = "General") {
+        let prompt = SavedPrompt(title: title, body: body, category: category)
+        metadata.promptVault.append(prompt)
+    }
+
+    func removePrompt(id: UUID) {
+        metadata.promptVault.removeAll { $0.id == id }
     }
 
     // MARK: - Export

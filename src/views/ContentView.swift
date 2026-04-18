@@ -69,6 +69,10 @@ struct ContentView: View {
             TTSPlayerView()
                 .frame(width: 400, height: 500)
         }
+        .sheet(isPresented: $viewModel.isShowingPromptVault) {
+            PromptVaultView()
+                .frame(width: 600, height: 500)
+        }
         .sheet(isPresented: $isShowingOnboarding) {
             OnboardingView(isPresented: $isShowingOnboarding)
                 .onDisappear {
