@@ -1,4 +1,7 @@
 import SwiftUI
+#if canImport(AppKit)
+import AppKit
+#endif
 
 struct ThemePickerView: View {
 
@@ -33,15 +36,22 @@ struct ThemePickerView: View {
                 }
                 .padding(16)
             }
-            .background(Color(.systemGroupedBackground))
+            .background(windowBackgroundColor)
             .navigationTitle("Writing Themes")
-            .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Done") { dismiss() }
                 }
             }
         }
+    }
+
+    private var windowBackgroundColor: Color {
+        #if canImport(AppKit)
+        return Color(NSColor.windowBackgroundColor)
+        #else
+        return Color(.systemBackground)
+        #endif
     }
 }
 

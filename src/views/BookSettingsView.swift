@@ -38,7 +38,6 @@ struct BookSettingsView: View {
                     LabeledContent("ISBN") {
                         TextField("978-...", text: $metadata.isbn)
                             .multilineTextAlignment(.trailing)
-                            .keyboardType(.numbersAndPunctuation)
                     }
                     LabeledContent("Genre") {
                         TextField("Fiction", text: $metadata.genre)
@@ -66,7 +65,6 @@ struct BookSettingsView: View {
                 }
             }
             .navigationTitle("Book Settings")
-            .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") { dismiss() }
@@ -79,7 +77,6 @@ struct BookSettingsView: View {
                     .fontWeight(.semibold)
                 }
             }
-            .scrollDismissesKeyboard(.interactively)
         }
     }
 }

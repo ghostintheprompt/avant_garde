@@ -26,6 +26,7 @@
 		6992EE62479BC069C396EF4B /* GoogleConverter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 92514EE028345ADFCF7B7261 /* GoogleConverter.swift */; };
 		6E4EBB8BD251525F10005C5E /* EbookDocument.swift in Sources */ = {isa = PBXBuildFile; fileRef = E37326123E3847FCD448690C /* EbookDocument.swift */; };
 		76C822F96D45BA226914B50F /* HTMLEscaping.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA8BBF776BB7BCB3AC6FD645 /* HTMLEscaping.swift */; };
+		92038B96C86459068B6CCFF7 /* UpdateChecker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11867A2DD17F316BE1044763 /* UpdateChecker.swift */; };
 		9F1281E544B9F2BBF892A3BA /* Logger.swift in Sources */ = {isa = PBXBuildFile; fileRef = 882F7E49EE9494F16BBBD718 /* Logger.swift */; };
 		A366FCC7DE3CAACB1D3E9D1E /* DocumentLibraryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D90493C2346EDDDB9E2CBA40 /* DocumentLibraryView.swift */; };
 		A4189CA0868C52AAF2928C94 /* ExportValidator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 598310E15409487292AD39DA /* ExportValidator.swift */; };
@@ -52,13 +53,14 @@
 /* Begin PBXFileReference section */
 		06E2A2503AF69366208889DA /* ChapterListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChapterListView.swift; sourceTree = "<group>"; };
 		08F96B55E4D3D43E01B3B6ED /* DocumentFileManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DocumentFileManager.swift; sourceTree = "<group>"; };
-		166989A26A38AE3FF1DA600E /* AvantGardeTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = AvantGardeTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		11867A2DD17F316BE1044763 /* UpdateChecker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UpdateChecker.swift; sourceTree = "<group>"; };
+		166989A26A38AE3FF1DA600E /* AvantGardeTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = AvantGardeTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		1EAE00343CB7D0D2E4B26BFA /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		237F332AE892FF168F57AE15 /* DocumentViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DocumentViewModel.swift; sourceTree = "<group>"; };
 		25F8B3A9310514587AFCF3E3 /* ThemePickerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThemePickerView.swift; sourceTree = "<group>"; };
 		284CE24B7C15612C376401B1 /* EbookFormat.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EbookFormat.swift; sourceTree = "<group>"; };
 		3610537B87F9B812A865A75C /* KDPConverter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KDPConverter.swift; sourceTree = "<group>"; };
-		3A296ED8AA72EA08214FE5E3 /* AvantGarde.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = AvantGarde.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		3A296ED8AA72EA08214FE5E3 /* AvantGarde.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = AvantGarde.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		3C3AB474424B67083174F917 /* UTTypeExtensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UTTypeExtensions.swift; sourceTree = "<group>"; };
 		42B0BAF9790BBDB14AEC7BE5 /* ColorThemeManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ColorThemeManager.swift; sourceTree = "<group>"; };
 		46EF78C4B63A6F4B73A75A3D /* TextToSpeech.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TextToSpeech.swift; sourceTree = "<group>"; };
@@ -151,6 +153,7 @@
 				08F96B55E4D3D43E01B3B6ED /* DocumentFileManager.swift */,
 				882F7E49EE9494F16BBBD718 /* Logger.swift */,
 				603427328BE2FBE51BD891BC /* ServiceContainer.swift */,
+				11867A2DD17F316BE1044763 /* UpdateChecker.swift */,
 			);
 			path = utils;
 			sourceTree = "<group>";
@@ -272,7 +275,6 @@
 				};
 			};
 			buildConfigurationList = 68F76D793EB4B19BCAF7BA24 /* Build configuration list for PBXProject "AvantGarde" */;
-			compatibilityVersion = "Xcode 14.0";
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
@@ -282,6 +284,7 @@
 			mainGroup = EF8F33F4BF5923D804E08EE7;
 			minimizedProjectReferenceProxies = 1;
 			preferredProjectObjectVersion = 77;
+			productRefGroup = 247071B24482F7FAAC692B7B /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
@@ -332,6 +335,7 @@
 				120B060385339495CFBCA3C4 /* TextToSpeech.swift in Sources */,
 				CE2B31A1DD396E0F975011B1 /* ThemePickerView.swift in Sources */,
 				B45B9386D287825AD54FDFD2 /* UTTypeExtensions.swift in Sources */,
+				92038B96C86459068B6CCFF7 /* UpdateChecker.swift in Sources */,
 				12859EE2E06871E48ED7BD30 /* ValidationResultsView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -383,7 +387,6 @@
 				COPY_PHASE_STRIP = NO;
 				CURRENT_PROJECT_VERSION = 1;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
-				ENABLE_BITCODE = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
@@ -400,18 +403,17 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
 				MARKETING_VERSION = 1.0;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				SDKROOT = iphoneos;
+				SDKROOT = macosx;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_TREAT_WARNINGS_AS_ERRORS = NO;
 				SWIFT_VERSION = 5.9;
-				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Debug;
 		};
@@ -421,18 +423,17 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = Resources/AvantGarde.entitlements;
-				CODE_SIGN_IDENTITY = "iPhone Developer";
+				COMBINE_HIDPI_IMAGES = YES;
 				DEVELOPMENT_TEAM = "";
 				INFOPLIST_FILE = Resources/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
-					"@executable_path/Frameworks",
+					"@executable_path/../Frameworks",
 				);
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.avantgarde.authoring;
-				SDKROOT = iphoneos;
+				SDKROOT = macosx;
 				SWIFT_OPTIMIZATION_LEVEL = "-O";
-				TARGETED_DEVICE_FAMILY = "1,2";
 				VALIDATE_PRODUCT = YES;
 			};
 			name = Release;
@@ -473,7 +474,6 @@
 				COPY_PHASE_STRIP = NO;
 				CURRENT_PROJECT_VERSION = 1;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
-				ENABLE_BITCODE = NO;
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
@@ -484,17 +484,16 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
 				MARKETING_VERSION = 1.0;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				SDKROOT = iphoneos;
+				SDKROOT = macosx;
 				SWIFT_COMPILATION_MODE = wholemodule;
 				SWIFT_OPTIMIZATION_LEVEL = "-O";
 				SWIFT_TREAT_WARNINGS_AS_ERRORS = NO;
 				SWIFT_VERSION = 5.9;
-				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Release;
 		};
@@ -502,16 +501,16 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
-				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				COMBINE_HIDPI_IMAGES = YES;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
-					"@executable_path/Frameworks",
-					"@loader_path/Frameworks",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
 				);
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.avantgarde.authoring.tests;
-				SDKROOT = iphoneos;
-				TARGETED_DEVICE_FAMILY = "1,2";
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/AvantGarde.app/AvantGarde";
+				SDKROOT = macosx;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/AvantGarde.app/Contents/MacOS/AvantGarde";
 			};
 			name = Release;
 		};
@@ -519,16 +518,16 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
-				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				COMBINE_HIDPI_IMAGES = YES;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
-					"@executable_path/Frameworks",
-					"@loader_path/Frameworks",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
 				);
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.avantgarde.authoring.tests;
-				SDKROOT = iphoneos;
-				TARGETED_DEVICE_FAMILY = "1,2";
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/AvantGarde.app/AvantGarde";
+				SDKROOT = macosx;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/AvantGarde.app/Contents/MacOS/AvantGarde";
 			};
 			name = Debug;
 		};
@@ -538,20 +537,19 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = Resources/AvantGarde.entitlements;
-				CODE_SIGN_IDENTITY = "iPhone Developer";
+				COMBINE_HIDPI_IMAGES = YES;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				DEVELOPMENT_TEAM = "";
 				INFOPLIST_FILE = Resources/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
-					"@executable_path/Frameworks",
+					"@executable_path/../Frameworks",
 				);
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.avantgarde.authoring;
-				SDKROOT = iphoneos;
+				SDKROOT = macosx;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
-				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Debug;
 		};

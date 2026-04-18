@@ -5,14 +5,28 @@ struct AvantGardeApp: App {
 
     @StateObject private var viewModel = DocumentViewModel()
     @StateObject private var themeManager = ColorThemeManager.shared
+    @StateObject private var updateChecker = UpdateChecker.shared
 
     var body: some Scene {
         WindowGroup {
             ContentView()
                 .environmentObject(viewModel)
                 .environmentObject(themeManager)
+                .onAppear {
+                    // Check for updates after 3 seconds on launch
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
+                        updateChecker.checkForUpdates(isAutoCheck: true)
+                    }
+                }
         }
         .commands {
+            // App menu
+            CommandGroup(after: .appInfo) {
+                Button("Check for Updates...") {
+                    updateChecker.checkForUpdates()
+                }
+            }
+
             // File menu additions
             CommandGroup(after: .newItem) {
                 Button("Save") {

@@ -1,4 +1,7 @@
 import SwiftUI
+#if canImport(AppKit)
+import AppKit
+#endif
 
 struct OnboardingView: View {
 
@@ -25,33 +28,52 @@ struct OnboardingView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            TabView(selection: $page) {
+            ZStack {
                 ForEach(pages.indices, id: \.self) { index in
-                    OnboardingPageView(page: pages[index])
-                        .tag(index)
+                    if page == index {
+                        OnboardingPageView(page: pages[index])
+                            .transition(.asymmetric(insertion: .move(edge: .trailing), removal: .move(edge: .leading)))
+                    }
                 }
             }
-            .tabViewStyle(.page(indexDisplayMode: .always))
-            .indexViewStyle(.page(backgroundDisplayMode: .always))
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+
+            // Custom Page Indicator
+            HStack(spacing: 8) {
+                ForEach(pages.indices, id: \.self) { index in
+                    Circle()
+                        .fill(page == index ? Color.accentColor : Color.secondary.opacity(0.3))
+                        .frame(width: 8, height: 8)
+                }
+            }
+            .padding(.bottom, 24)
 
             Button(action: advance) {
                 Text(page < pages.count - 1 ? "Next" : "Get Started")
                     .font(.headline)
                     .frame(maxWidth: .infinity)
-                    .padding(.vertical, 14)
+                    .padding(.vertical, 10)
             }
             .buttonStyle(.borderedProminent)
-            .padding(.horizontal, 24)
+            .controlSize(.large)
+            .padding(.horizontal, 40)
             .padding(.bottom, 40)
-            .padding(.top, 8)
         }
-        .background(Color(.systemBackground))
-        .interactiveDismissDisabled()
+        .frame(width: 500, height: 450)
+        .background(windowBackgroundColor)
+    }
+
+    private var windowBackgroundColor: Color {
+        #if canImport(AppKit)
+        return Color(NSColor.windowBackgroundColor)
+        #else
+        return Color(.systemBackground)
+        #endif
     }
 
     private func advance() {
         if page < pages.count - 1 {
-            withAnimation { page += 1 }
+            withAnimation(.spring()) { page += 1 }
         } else {
             isPresented = false
         }
@@ -88,9 +110,8 @@ private struct OnboardingPageView: View {
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
                     .fixedSize(horizontal: false, vertical: true)
-                    .padding(.horizontal, 16)
+                    .padding(.horizontal, 32)
             }
-            Spacer()
             Spacer()
         }
         .padding(.horizontal, 24)

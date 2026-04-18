@@ -3,7 +3,7 @@ name: AvantGarde
 options:
   bundleIdPrefix: com.avantgarde
   deploymentTarget:
-    iOS: "16.0"
+    macOS: "13.0"
   xcodeVersion: "16.0"
   generateEmptyDirectories: false
   defaultConfig: Debug
@@ -13,11 +13,9 @@ options:
 settings:
   base:
     SWIFT_VERSION: "5.9"
-    IPHONEOS_DEPLOYMENT_TARGET: "16.0"
-    TARGETED_DEVICE_FAMILY: "1,2"
+    MACOSX_DEPLOYMENT_TARGET: "13.0"
     MARKETING_VERSION: "1.0"
     CURRENT_PROJECT_VERSION: "1"
-    ENABLE_BITCODE: NO
     DEBUG_INFORMATION_FORMAT: dwarf-with-dsym
     SWIFT_TREAT_WARNINGS_AS_ERRORS: NO
 
@@ -25,8 +23,8 @@ targets:
 
   AvantGarde:
     type: application
-    platform: iOS
-    deploymentTarget: "16.0"
+    platform: macOS
+    deploymentTarget: "13.0"
     sources:
       - path: src
         excludes:
@@ -40,28 +38,9 @@ targets:
       path: Resources/Info.plist
       properties:
         CFBundleDisplayName: Avant Garde
-        CFBundleIcons:
-          CFBundlePrimaryIcon:
-            CFBundleIconFiles: [AppIcon]
-            UIPrerenderedIcon: false
-        UISupportedInterfaceOrientations:
-          - UIInterfaceOrientationPortrait
-        "UISupportedInterfaceOrientations~ipad":
-          - UIInterfaceOrientationPortrait
-          - UIInterfaceOrientationPortraitUpsideDown
-          - UIInterfaceOrientationLandscapeLeft
-          - UIInterfaceOrientationLandscapeRight
-        UILaunchScreen: {}
-        UIApplicationSceneManifest:
-          UIApplicationSupportsMultipleScenes: true
-          UISceneConfigurations: {}
-        NSSpeechRecognitionUsageDescription: "Avant Garde reads your chapters aloud so you can review your manuscript hands-free."
-        NSMicrophoneUsageDescription: "Avant Garde uses the microphone for text-to-speech voice preview only. No audio is recorded."
-        UIRequiredDeviceCapabilities: [arm64]
-        UIFileSharingEnabled: true
-        LSSupportsOpeningDocumentsInPlace: true
         NSHumanReadableCopyright: "© 2026 Avant Garde"
         ITSAppUsesNonExemptEncryption: false
+        LSMinimumSystemVersion: "13.0"
     entitlements:
       path: Resources/AvantGarde.entitlements
     settings:
@@ -83,8 +62,8 @@ targets:
 
   AvantGardeTests:
     type: bundle.unit-test
-    platform: iOS
-    deploymentTarget: "16.0"
+    platform: macOS
+    deploymentTarget: "13.0"
     sources:
       - path: Tests
     dependencies:

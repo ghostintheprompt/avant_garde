@@ -30,7 +30,7 @@ struct ContentView: View {
             DocumentLibraryView()
                 .environmentObject(viewModel)
         }
-        .fullScreenCover(isPresented: .init(
+        .sheet(isPresented: .init(
             get: { !onboardingComplete },
             set: { if !$0 { onboardingComplete = true } }
         )) {
@@ -93,7 +93,7 @@ struct ContentView: View {
         }
         .toolbar {
             // Leading: document actions
-            ToolbarItemGroup(placement: .topBarLeading) {
+            ToolbarItemGroup(placement: .navigation) {
                 Menu {
                     Button("New Book", systemImage: "doc.badge.plus") {
                         viewModel.newDocument()
@@ -111,7 +111,7 @@ struct ContentView: View {
             }
 
             // Trailing: export + theme + TTS
-            ToolbarItemGroup(placement: .topBarTrailing) {
+            ToolbarItemGroup(placement: .navigation) {
                 Button {
                     viewModel.isShowingThemePicker = true
                 } label: {
@@ -240,7 +240,6 @@ struct ExportShareView: View {
                 }
             }
             .navigationTitle("Export Ready")
-            .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Done") { dismiss() }

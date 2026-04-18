@@ -21,7 +21,6 @@ struct TTSPlayerView: View {
                 voiceSection
             }
             .navigationTitle("Listen")
-            .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Done") { dismiss() }

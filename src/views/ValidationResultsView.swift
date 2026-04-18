@@ -90,9 +90,8 @@ struct ValidationResultsView: View {
                     }
                 }
             }
-            .listStyle(.insetGrouped)
+            .listStyle(.inset)
             .navigationTitle("Validation — \(report.format.rawValue)")
-            .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Done") { dismiss() }

@@ -23,12 +23,11 @@ struct DocumentLibraryView: View {
                 }
             }
             .navigationTitle("My Books")
-            .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .topBarLeading) {
+                ToolbarItem(placement: .navigation) {
                     Button("Cancel") { dismiss() }
                 }
-                ToolbarItem(placement: .topBarTrailing) {
+                ToolbarItem(placement: .navigation) {
                     Button {
                         showImporter = true
                     } label: {
@@ -108,7 +107,7 @@ struct DocumentLibraryView: View {
                     }
             }
         }
-        .listStyle(.insetGrouped)
+        .listStyle(.inset)
     }
 
     // MARK: - Empty State
