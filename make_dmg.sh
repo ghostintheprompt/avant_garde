@@ -14,7 +14,7 @@ echo "--- Building Avant Garde v${VERSION} with Branded Icons ---"
 rm -rf "${BUILD_DIR}"
 rm -f "${DMG_NAME}"
 
-# 1. Generate .icns file for the app bundle and DMG
+# 1. Generate .icns file
 echo "Generating .icns file..."
 ICON_SET="${BUILD_DIR}/icon.iconset"
 mkdir -p "${ICON_SET}"
@@ -35,6 +35,7 @@ iconutil -c icns "${ICON_SET}" -o "${BUILD_DIR}/AppIcon.icns"
 
 # 2. Build the app
 echo "Building target..."
+xcodegen generate
 xcodebuild -project "${APP_NAME}.xcodeproj" \
     -scheme "${APP_NAME}" \
     -configuration Release \
@@ -44,7 +45,6 @@ xcodebuild -project "${APP_NAME}.xcodeproj" \
     CODE_SIGN_IDENTITY="" \
     build | grep -E "error:|warning:|succeeded"
 
-# Find the app bundle
 APP_PATH=$(find "${BUILD_DIR}" -name "${APP_NAME}.app" -type d | head -n 1)
 
 if [ -z "$APP_PATH" ]; then
@@ -54,7 +54,7 @@ fi
 
 echo "Found app at: ${APP_PATH}"
 
-# 3. Inject the .icns into the built app bundle manually
+# 3. Inject the .icns
 mkdir -p "${APP_PATH}/Contents/Resources"
 cp "${BUILD_DIR}/AppIcon.icns" "${APP_PATH}/Contents/Resources/AppIcon.icns"
 
@@ -65,10 +65,9 @@ mkdir -p "${DMG_STAGING}"
 cp -R "${APP_PATH}" "${DMG_STAGING}/"
 ln -s /Applications "${DMG_STAGING}/Applications"
 
-# Set volume icon
+# Volume Icon
 cp "${BUILD_DIR}/AppIcon.icns" "${DMG_STAGING}/.VolumeIcon.icns"
-# This requires developer tools or specific utilities to apply immediately, 
-# but hdiutil will pick up the VolumeIcon if we use -volicon
+SetFile -a C "${DMG_STAGING}"
 
 hdiutil create -volname "${APP_NAME}" -srcfolder "${DMG_STAGING}" -ov -format UDZO "${DMG_NAME}"
 
