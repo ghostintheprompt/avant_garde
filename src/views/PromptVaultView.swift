@@ -55,7 +55,7 @@ struct PromptVaultView: View {
                     }
                 }
             }
-            .listStyle(.insetGrouped)
+            .listStyle(.inset)
             .scrollContentBackground(.hidden)
             .background(colors.background)
             .navigationTitle("PROMPT VAULT")
