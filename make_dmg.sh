@@ -4,7 +4,7 @@
 # MDRN Corp — mdrn.app
 
 APP_NAME="AvantGarde"
-VERSION="1.0.0"
+VERSION="1.0.1"
 DMG_NAME="${APP_NAME}_v${VERSION}.dmg"
 BUILD_DIR="build"
 APP_BUNDLE="${BUILD_DIR}/Release-iphoneos/${APP_NAME}.app" 
