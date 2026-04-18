@@ -102,7 +102,7 @@ private struct EditorContent: View {
                         Label(viewModel.document.metadata.preset.rawValue, systemImage: "text.justify.left")
                             .font(.system(size: 10, weight: .black))
                     }
-                    .menuStyle(.plain)
+                    .menuStyle(.borderlessButton)
                     
                     Divider().frame(height: 12)
                     
