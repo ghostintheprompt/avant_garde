@@ -19,15 +19,16 @@ This tool is for anyone who loves the raw process of putting words on a page. It
 
 ---
 
-## Why Avant Garde?
+## The Gonzo Edge
 
-| Feature | Description | The Edge |
+| Feature | Description | The Advantage |
 |---|---|---|
+| **The Prompt Vault** | Dedicated tactical storage for series bibles and character prompts | Treat prompting as writing. Keep your world rules 1-click away |
 | **Matte Paint Themes** | From *Meridian* cream to the aggressive *Desert Heat* (HST) and *The City* (Transmet) | Visual immersion that triggers your specific writing flow |
+| **AI Lab (Alpha)** | Secure personal hooks for **Claude, Gemini, GPT-4, and Grok** | Your own API keys, your own data. No subscriptions. Pure power |
+| **Universal Imports** | Native support for **.docx, .md, and .rtf** | Seamlessly bridge your Google Drive/Word workflow into the engine |
 | **Vellum-Grade Layout** | Live editor preview with professional "Sink" headers and Drop Caps | See your book as it will exist in the world, while you write |
 | **Gonzo Feedback** | Optional mechanical typewriter audio for tactical response | Makes every keystroke feel like a decision |
-| **AI Lab (Alpha)** | Optional hooks for Claude, Gemini, GPT, and Grok | Your own API keys, your own data, no subscriptions |
-| **Universal Imports** | Native support for .docx, .md, and .rtf | Seamlessly bridge your Google Drive/Word workflow |
 
 ## Installation & Security
 
@@ -44,12 +45,13 @@ Because Avant Garde is a free, open-source tool, it is not signed by a developer
 
 ## Usage
 
-1. **Atmosphere:** Select a theme in Onboarding or the "Paintbrush" icon. Use *Desert Heat* for raw drafting or *Meridian* for final polish.
-2. **Audio Pass:** Use the "Audio" menu to listen to your chapter. It’s the fastest way to catch dialogue friction.
-3. **Publishing:** `Shift + Command + K` to export a professionally formatted KDP file. No submission surprises.
+1. **Atmosphere:** Select a theme in Onboarding or via the **Paintbrush** icon. Use *Desert Heat* for raw drafting or *Meridian* for final polish.
+2. **The Vault:** Click the **Vault** icon in the status bar to save or retrieve your series prompts and world-building notes.
+3. **AI Hooks:** Configure your keys in **Book Settings > AI Lab**. Keys are stored only in your local macOS keychain.
+4. **Publishing:** `Shift + Command + K` to export a professionally formatted KDP file. No submission surprises.
 
 ## Privacy Statement
-Avant Garde is local-only software. We do not collect telemetry. If you use the AI Lab, your keys are stored in your local keychain. Your words belong to you.
+Avant Garde is local-only software. We do not collect telemetry. Your words belong to you.
 
 ---
 
