@@ -2,6 +2,8 @@ import Foundation
 
 class GoogleConverter: Converter {
 
+    private let engine = FormattingEngine.shared
+
     // MARK: - Async API
 
     func convertToGoogle(document: EbookDocument) async throws -> Data {
@@ -20,13 +22,6 @@ class GoogleConverter: Converter {
     // MARK: - Synchronous Implementation
 
     private func convertToGoogleSync(document: EbookDocument) throws -> Data {
-        // Use local formatting copy — avoids mutating the shared document reference
-        var googleFormatting = document.formatting
-        googleFormatting.fontSize = 11
-        googleFormatting.fontName = "Arial"
-        googleFormatting.lineSpacing = 1.2
-        googleFormatting.chapterStartsNewPage = true
-
         let epubContent = generateGoogleEPUB(document)
 
         guard let data = epubContent.data(using: .utf8), !data.isEmpty else {
@@ -53,8 +48,13 @@ class GoogleConverter: Converter {
     private func generateGoogleEPUB(_ document: EbookDocument) -> String {
         var content = generateEPUBHeader(document.metadata)
         content += generateTableOfContents(document.chapters)
-        for chapter in document.chapters {
-            content += generateEPUBChapter(chapter)
+        for (index, chapter) in document.chapters.enumerated() {
+            content += """
+            <div id="chapter\(index + 1)">
+            \(engine.formatChapter(chapter, metadata: document.metadata, index: index))
+            </div>
+            
+            """
         }
         content += generateEPUBFooter()
         return content
@@ -64,6 +64,9 @@ class GoogleConverter: Converter {
         let identifier = metadata.isbn.isEmpty
             ? "urn:uuid:\(UUID().uuidString)"
             : "urn:isbn:\(metadata.isbn.htmlEscaped)"
+            
+        let baseCSS = engine.generateCSS(for: metadata)
+        let epubCSS = baseCSS + "\n        .toc { page-break-after: always; }\n        .toc ul { list-style-type: none; padding-left: 0; }\n        .toc li { margin: 0.5em 0; }\n        img { max-width: 100%; height: auto; }"
 
         return """
         <?xml version="1.0" encoding="UTF-8"?>
@@ -84,14 +87,7 @@ class GoogleConverter: Converter {
             <meta name="generator" content="Avant Garde Ebook Authoring"/>
             <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
             <style type="text/css">
-                body { font-family: Arial, 'Helvetica Neue', sans-serif; font-size: 11pt; line-height: 1.2; margin: 1.5em; text-align: justify; }
-                h1 { font-size: 1.5em; font-weight: bold; text-align: center; page-break-before: always; margin: 1.5em 0; }
-                p { text-indent: 1.5em; margin: 0; margin-bottom: 0.5em; text-align: justify; orphans: 2; widows: 2; }
-                .chapter { page-break-after: always; }
-                .toc { page-break-after: always; }
-                .toc ul { list-style-type: none; padding-left: 0; }
-                .toc li { margin: 0.5em 0; }
-                img { max-width: 100%; height: auto; }
+        \(epubCSS)
             </style>
         </head>
         <body>
@@ -106,27 +102,6 @@ class GoogleConverter: Converter {
         }
         toc += "    </ul>\n</div>\n\n"
         return toc
-    }
-
-    private func generateEPUBChapter(_ chapter: Chapter) -> String {
-        let formattedContent = formatChapterContent(chapter.content)
-        return """
-        <div class="chapter" id="chapter\(chapter.id.uuidString)">
-            <h1>\(chapter.title.htmlEscaped)</h1>
-        \(formattedContent)
-        </div>
-
-        """
-    }
-
-    private func formatChapterContent(_ content: String) -> String {
-        let paragraphs = content.components(separatedBy: "\n\n")
-            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
-            .filter { !$0.isEmpty }
-        return paragraphs.map { paragraph in
-            let withBreaks = paragraph.htmlEscaped.replacingOccurrences(of: "\n", with: "<br/>\n")
-            return "        <p>\(withBreaks)</p>"
-        }.joined(separator: "\n")
     }
 
     private func generateEPUBFooter() -> String {
