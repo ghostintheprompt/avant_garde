@@ -264,6 +264,23 @@ class DocumentViewModel: ObservableObject {
         }
     }
 
+    func importExternal(from url: URL) {
+        do {
+            let imported = try fileManager.importExternal(from: url)
+            document = imported
+            documentID = UUID()
+            UserDefaults.standard.set(documentID.uuidString, forKey: DocumentViewModel.currentDocumentIDKey)
+            currentFileURL = nil // It's a new unsaved document from an import
+            hasUnsavedChanges = true
+            selectFirstChapter()
+            refreshStats()
+            Logger.info("Imported external file: \(url.lastPathComponent)", category: .general)
+        } catch {
+            loadError = "Could not import \"\(url.lastPathComponent)\": \(error.localizedDescription)"
+            Logger.error("Import failed", error: error, category: .general)
+        }
+    }
+
     private func persistLastOpenURL(_ url: URL) {
         if let data = try? NSKeyedArchiver.archivedData(withRootObject: url as NSURL, requiringSecureCoding: true) {
             UserDefaults.standard.set(data, forKey: DocumentViewModel.lastOpenURLKey)

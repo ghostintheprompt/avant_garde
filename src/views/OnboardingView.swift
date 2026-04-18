@@ -10,6 +10,11 @@ struct OnboardingView: View {
 
     private let pages: [OnboardingPage] = [
         OnboardingPage(
+            systemImage: "paintbrush.fill",
+            title: "Choose Your Atmosphere",
+            body: "Select a writing theme based on your genre and focus needs. Each theme uses research-backed color psychology to optimize your performance."
+        ),
+        OnboardingPage(
             systemImage: "doc.richtext",
             title: "Write Your Book",
             body: "Organize your chapters in the sidebar and write freely in the editor. Avant Garde auto-saves as you go."
@@ -31,8 +36,16 @@ struct OnboardingView: View {
             ZStack {
                 ForEach(pages.indices, id: \.self) { index in
                     if page == index {
-                        OnboardingPageView(page: pages[index])
-                            .transition(.asymmetric(insertion: .move(edge: .trailing), removal: .move(edge: .leading)))
+                        VStack {
+                            OnboardingPageView(page: pages[index])
+                            
+                            if index == 0 {
+                                ThemeSelectionGrid()
+                                    .padding(.top, -20)
+                                    .padding(.bottom, 20)
+                            }
+                        }
+                        .transition(.asymmetric(insertion: .move(edge: .trailing), removal: .move(edge: .leading)))
                     }
                 }
             }
@@ -59,7 +72,7 @@ struct OnboardingView: View {
             .padding(.horizontal, 40)
             .padding(.bottom, 40)
         }
-        .frame(width: 500, height: 450)
+        .frame(width: 500, height: 500)
         .background(windowBackgroundColor)
     }
 
@@ -76,6 +89,39 @@ struct OnboardingView: View {
             withAnimation(.spring()) { page += 1 }
         } else {
             isPresented = false
+        }
+    }
+}
+
+// MARK: - Theme Selection Grid
+
+private struct ThemeSelectionGrid: View {
+    @EnvironmentObject var themeManager: ColorThemeManager
+
+    let themes: [ColorThemeManager.WritingTheme] = [.gonzo, .focused, .creative, .calm]
+
+    var body: some View {
+        HStack(spacing: 16) {
+            ForEach(themes) { theme in
+                Button {
+                    themeManager.applyTheme(theme)
+                } label: {
+                    VStack {
+                        Circle()
+                            .fill(theme.colors.background)
+                            .frame(width: 44, height: 44)
+                            .overlay(
+                                Circle()
+                                    .stroke(themeManager.currentTheme == theme ? Color.accentColor : Color.secondary.opacity(0.2), lineWidth: 2)
+                            )
+                            .shadow(radius: 2)
+                        Text(theme.rawValue)
+                            .font(.caption2)
+                            .foregroundStyle(.primary)
+                    }
+                }
+                .buttonStyle(.plain)
+            }
         }
     }
 }
@@ -122,4 +168,5 @@ private struct OnboardingPageView: View {
 
 #Preview {
     OnboardingView(isPresented: .constant(true))
+        .environmentObject(ColorThemeManager.shared)
 }

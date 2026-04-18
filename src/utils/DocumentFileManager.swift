@@ -107,4 +107,41 @@ class DocumentFileManager {
         let url = DocumentFileManager.autoSaveURL(for: id)
         try? FileManager.default.removeItem(at: url)
     }
+
+    // MARK: - External Imports
+
+    func importExternal(from url: URL) throws -> EbookDocument {
+        let ext = url.pathExtension.lowercased()
+        let document = EbookDocument()
+        document.metadata.title = url.deletingPathExtension().lastPathComponent
+
+        switch ext {
+        case "md", "markdown", "txt":
+            let content = try String(contentsOf: url, encoding: .utf8)
+            document.chapters = [Chapter(title: "Imported Content", content: content)]
+        
+        case "rtf":
+            #if os(macOS)
+            if let attributedString = try? NSAttributedString(url: url, options: [.documentType: NSAttributedString.DocumentType.rtf], documentAttributes: nil) {
+                document.chapters = [Chapter(title: "Imported RTF", content: attributedString.string)]
+            } else {
+                throw ConversionError.invalidData
+            }
+            #endif
+
+        case "docx":
+            #if os(macOS)
+            if let attributedString = try? NSAttributedString(url: url, options: [.documentType: NSAttributedString.DocumentType.officeOpenXML], documentAttributes: nil) {
+                document.chapters = [Chapter(title: "Imported Word", content: attributedString.string)]
+            } else {
+                throw ConversionError.invalidData
+            }
+            #endif
+
+        default:
+            throw ConversionError.unsupportedFormat
+        }
+
+        return document
+    }
 }

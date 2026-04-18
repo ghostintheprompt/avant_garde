@@ -1,4 +1,5 @@
 import SwiftUI
+import UniformTypeIdentifiers
 
 struct DocumentLibraryView: View {
 
@@ -33,16 +34,23 @@ struct DocumentLibraryView: View {
                     } label: {
                         Label("Import", systemImage: "folder.badge.plus")
                     }
+                    .help("Import from Google Drive, Word, or Markdown")
                 }
             }
             .onAppear { reload() }
             .fileImporter(
                 isPresented: $showImporter,
-                allowedContentTypes: [.data],
+                allowedContentTypes: [.data, .item, .rtf, UTType(filenameExtension: "docx")!],
                 allowsMultipleSelection: false
             ) { result in
                 if case .success(let picked) = result, let url = picked.first {
-                    viewModel.load(from: url)
+                    // Check if it's our native format or an external one
+                    if url.pathExtension == DocumentFileManager.fileExtension {
+                        viewModel.load(from: url)
+                    } else {
+                        viewModel.importExternal(from: url)
+                    }
+                    
                     if viewModel.loadError == nil {
                         dismiss()
                     }
@@ -90,21 +98,35 @@ struct DocumentLibraryView: View {
 
     private var documentList: some View {
         List {
-            ForEach(urls, id: \.absoluteString) { url in
-                DocumentRow(url: url)
-                    .contentShape(Rectangle())
-                    .onTapGesture {
-                        viewModel.load(from: url)
-                        dismiss()
-                    }
-                    .swipeActions(edge: .trailing, allowsFullSwipe: false) {
-                        Button(role: .destructive) {
-                            deleteTarget = url
-                            showDeleteConfirm = true
-                        } label: {
-                            Label("Delete", systemImage: "trash")
+            Section("AvantGarde Library") {
+                ForEach(urls, id: \.absoluteString) { url in
+                    DocumentRow(url: url)
+                        .contentShape(Rectangle())
+                        .onTapGesture {
+                            viewModel.load(from: url)
+                            dismiss()
                         }
-                    }
+                        .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                            Button(role: .destructive) {
+                                deleteTarget = url
+                                showDeleteConfirm = true
+                            } label: {
+                                Label("Delete", systemImage: "trash")
+                            }
+                        }
+                }
+            }
+            
+            Section("External Workflow") {
+                Button {
+                    showImporter = true
+                } label: {
+                    Label("Import from Google Drive / Word / MD", systemImage: "square.and.arrow.down")
+                }
+                
+                Text("Select any .docx, .md, or .rtf file. If you use Google Drive, look for the 'Google Drive' folder in your Finder sidebar.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
             }
         }
         .listStyle(.inset)
@@ -113,24 +135,45 @@ struct DocumentLibraryView: View {
     // MARK: - Empty State
 
     private var emptyState: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: 24) {
             Image(systemName: "books.vertical")
                 .font(.system(size: 52))
                 .foregroundStyle(.secondary)
-            Text("No Books Yet")
-                .font(.headline)
-            Text("Create a new book or import an existing file.")
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
-                .multilineTextAlignment(.center)
-                .padding(.horizontal, 40)
-            Button {
-                showImporter = true
-            } label: {
-                Label("Import from Files", systemImage: "folder")
+            
+            VStack(spacing: 8) {
+                Text("No Books Yet")
+                    .font(.headline)
+                Text("Create a new book or import your existing work from Google Drive or Word.")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 40)
             }
-            .buttonStyle(.bordered)
+            
+            VStack(spacing: 12) {
+                Button {
+                    viewModel.newDocument()
+                    dismiss()
+                } label: {
+                    Label("Create New Book", systemImage: "plus")
+                        .frame(width: 200)
+                }
+                .buttonStyle(.borderedProminent)
+                
+                Button {
+                    showImporter = true
+                } label: {
+                    Label("Import External File", systemImage: "folder")
+                        .frame(width: 200)
+                }
+                .buttonStyle(.bordered)
+            }
             .padding(.top, 4)
+            
+            Text("Tip: Google Drive synced folders can be selected via the sidebar in the file picker.")
+                .font(.caption2)
+                .foregroundStyle(.tertiary)
+                .padding(.top, 20)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }

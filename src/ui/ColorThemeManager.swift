@@ -6,266 +6,153 @@ class ColorThemeManager: ObservableObject {
 
     static let shared = ColorThemeManager()
 
-    @Published var currentTheme: WritingTheme = WritingTheme(rawValue: UserDefaults.standard.string(forKey: "selectedTheme") ?? "") ?? .focused
+    @Published var currentTheme: WritingTheme = WritingTheme(rawValue: UserDefaults.standard.string(forKey: "selectedTheme") ?? "") ?? .meridian
 
     // MARK: - Writing Themes
 
     enum WritingTheme: String, CaseIterable, Identifiable {
-        case focused = "Focused Flow"
-        case creative = "Creative Burst"
-        case calm = "Zen Garden"
-        case energetic = "Power Writing"
-        case romantic = "Romance Mode"
-        case mystery = "Dark Mystery"
-        case scifi = "Futuristic"
-        case nature = "Forest Retreat"
-        case vintage = "Vintage Paper"
-        case minimalist = "Pure Focus"
-        case warm = "Cozy Fireplace"
-        case ocean = "Ocean Depths"
-        case gonzo = "Gonzo Journalism"
+        // Light / Matte Professional (Leading)
+        case meridian = "Meridian"
+        case focused = "Atomic Focus"
+        case calm = "Zen Static"
+        case creative = "Electric Orange"
+        case paper = "Vintage Press"
+        
+        // Dark / Aggressive (Gonzo & Transmetropolitan)
+        case gonzo = "Gonzo Carbon"
+        case desert = "Desert Heat"
+        case theCity = "The City"
+        case ocean = "Midnight Ocean"
+        case mystery = "Noir"
 
         var id: String { rawValue }
 
-        var description: String {
-            switch self {
-            case .focused: return "Cool blues enhance concentration and reduce mental fatigue"
-            case .creative: return "Vibrant oranges and purples stimulate imagination"
-            case .calm: return "Soft greens promote relaxation and steady writing flow"
-            case .energetic: return "Bold reds increase alertness and writing speed"
-            case .romantic: return "Warm pinks and roses inspire emotional writing"
-            case .mystery: return "Deep purples and blacks create atmospheric tension"
-            case .scifi: return "Electric blues and cyans for futuristic storytelling"
-            case .nature: return "Earth tones connect you with natural creativity"
-            case .vintage: return "Sepia and cream for classic, timeless writing"
-            case .minimalist: return "High contrast for distraction-free focus"
-            case .warm: return "Golden hues create comfortable, inviting atmosphere"
-            case .ocean: return "Deep blue-greens for contemplative, flowing prose"
-            case .gonzo: return "High-contrast monochrome with crimson accents for raw, aggressive focus"
-            }
-        }
-
-        var psychologyEffect: String {
-            switch self {
-            case .focused: return "Increases focus by 23%, reduces eye strain"
-            case .creative: return "Boosts creative thinking by 31%"
-            case .calm: return "Reduces stress by 18%, improves flow state"
-            case .energetic: return "Increases alertness by 27%"
-            case .romantic: return "Enhances emotional expression by 35%"
-            case .mystery: return "Creates atmospheric immersion"
-            case .scifi: return "Stimulates futuristic thinking"
-            case .nature: return "Reduces writer's block, natural creativity"
-            case .vintage: return "Evokes nostalgia for period writing"
-            case .minimalist: return "Eliminates distractions, pure word focus"
-            case .warm: return "Creates comfort zone, reduces writing anxiety"
-            case .ocean: return "Promotes deep thinking, philosophical writing"
-            case .gonzo: return "Maximizes raw creative output, aggressive clarity"
-            }
-        }
-
         var colors: ThemeColors {
             switch self {
+            // LIGHT THEMES
+            case .meridian:
+                return ThemeColors(
+                    background: Color(red: 0.95, green: 0.94, blue: 0.92), // Matte Cream
+                    text: Color(red: 0.15, green: 0.18, blue: 0.22),
+                    accent: Color(red: 0.72, green: 0.51, blue: 0.25), // Matte Copper
+                    sidebar: Color(red: 0.92, green: 0.91, blue: 0.88),
+                    editorPaper: Color(red: 0.98, green: 0.97, blue: 0.95)
+                )
             case .focused:
                 return ThemeColors(
-                    background: Color(red: 0.96, green: 0.97, blue: 1.0),
-                    text: Color(red: 0.2, green: 0.3, blue: 0.4),
-                    accent: Color(red: 0.3, green: 0.5, blue: 0.8),
-                    sidebar: Color(red: 0.94, green: 0.95, blue: 0.98)
-                )
-            case .creative:
-                return ThemeColors(
-                    background: Color(red: 1.0, green: 0.98, blue: 0.94),
-                    text: Color(red: 0.4, green: 0.2, blue: 0.4),
-                    accent: Color(red: 0.9, green: 0.4, blue: 0.2),
-                    sidebar: Color(red: 0.98, green: 0.95, blue: 0.9)
+                    background: Color(red: 0.94, green: 0.96, blue: 1.0), // Matte Ice
+                    text: Color(red: 0.1, green: 0.2, blue: 0.4),
+                    accent: Color(red: 0.2, green: 0.5, blue: 0.9), // Strong Blue
+                    sidebar: Color(red: 0.9, green: 0.92, blue: 0.96),
+                    editorPaper: .white
                 )
             case .calm:
                 return ThemeColors(
-                    background: Color(red: 0.97, green: 0.99, blue: 0.97),
-                    text: Color(red: 0.3, green: 0.4, blue: 0.3),
-                    accent: Color(red: 0.4, green: 0.7, blue: 0.5),
-                    sidebar: Color(red: 0.95, green: 0.97, blue: 0.95)
+                    background: Color(white: 0.96),
+                    text: Color(white: 0.3),
+                    accent: Color(white: 0.5),
+                    sidebar: Color(white: 0.92),
+                    editorPaper: .white
                 )
-            case .energetic:
+            case .creative:
                 return ThemeColors(
-                    background: Color(red: 1.0, green: 0.97, blue: 0.95),
-                    text: Color(red: 0.4, green: 0.1, blue: 0.1),
-                    accent: Color(red: 0.8, green: 0.2, blue: 0.2),
-                    sidebar: Color(red: 0.98, green: 0.94, blue: 0.92)
+                    background: Color(red: 1.0, green: 0.98, blue: 0.92),
+                    text: Color(red: 0.4, green: 0.2, blue: 0.1),
+                    accent: Color(red: 1.0, green: 0.45, blue: 0.0), // Strong Matte Orange
+                    sidebar: Color(red: 1.0, green: 0.95, blue: 0.88),
+                    editorPaper: .white
                 )
-            case .romantic:
+            case .paper:
                 return ThemeColors(
-                    background: Color(red: 1.0, green: 0.98, blue: 0.98),
-                    text: Color(red: 0.4, green: 0.2, blue: 0.3),
-                    accent: Color(red: 0.8, green: 0.4, blue: 0.5),
-                    sidebar: Color(red: 0.98, green: 0.96, blue: 0.96)
+                    background: Color(red: 0.9, green: 0.88, blue: 0.82), // Newsprint
+                    text: Color(red: 0.1, green: 0.1, blue: 0.1),
+                    accent: Color(red: 0.5, green: 0.3, blue: 0.2),
+                    sidebar: Color(red: 0.85, green: 0.83, blue: 0.78),
+                    editorPaper: Color(red: 0.94, green: 0.92, blue: 0.86)
                 )
-            case .mystery:
+
+            // DARK / AGGRESSIVE THEMES
+            case .gonzo:
                 return ThemeColors(
-                    background: Color(red: 0.1, green: 0.1, blue: 0.15),
-                    text: Color(red: 0.8, green: 0.8, blue: 0.9),
-                    accent: Color(red: 0.6, green: 0.4, blue: 0.8),
-                    sidebar: Color(red: 0.08, green: 0.08, blue: 0.12)
+                    background: Color(white: 0.08), // Carbon Matte
+                    text: Color(white: 0.92),
+                    accent: Color(red: 0.9, green: 0.0, blue: 0.1), // Blood Red
+                    sidebar: Color(white: 0.04),
+                    editorPaper: Color(white: 0.12)
                 )
-            case .scifi:
+            case .desert:
                 return ThemeColors(
-                    background: Color(red: 0.05, green: 0.1, blue: 0.15),
-                    text: Color(red: 0.7, green: 0.9, blue: 1.0),
-                    accent: Color(red: 0.0, green: 0.7, blue: 1.0),
-                    sidebar: Color(red: 0.03, green: 0.08, blue: 0.12)
+                    background: Color(red: 0.15, green: 0.1, blue: 0.05), // Deep Mud
+                    text: Color(red: 1.0, green: 0.8, blue: 0.2), // Vegas Yellow
+                    accent: Color(red: 1.0, green: 0.4, blue: 0.0), // Sunset Orange
+                    sidebar: Color(red: 0.1, green: 0.07, blue: 0.03),
+                    editorPaper: Color(red: 0.18, green: 0.12, blue: 0.07)
                 )
-            case .nature:
+            case .theCity:
                 return ThemeColors(
-                    background: Color(red: 0.98, green: 0.98, blue: 0.94),
-                    text: Color(red: 0.3, green: 0.4, blue: 0.2),
-                    accent: Color(red: 0.5, green: 0.6, blue: 0.3),
-                    sidebar: Color(red: 0.96, green: 0.96, blue: 0.92)
-                )
-            case .vintage:
-                return ThemeColors(
-                    background: Color(red: 0.97, green: 0.94, blue: 0.87),
-                    text: Color(red: 0.3, green: 0.25, blue: 0.2),
-                    accent: Color(red: 0.6, green: 0.4, blue: 0.2),
-                    sidebar: Color(red: 0.95, green: 0.92, blue: 0.85)
-                )
-            case .minimalist:
-                return ThemeColors(
-                    background: Color.white,
-                    text: Color.black,
-                    accent: Color.gray,
-                    sidebar: Color(white: 0.98)
-                )
-            case .warm:
-                return ThemeColors(
-                    background: Color(red: 1.0, green: 0.96, blue: 0.9),
-                    text: Color(red: 0.4, green: 0.3, blue: 0.2),
-                    accent: Color(red: 0.8, green: 0.5, blue: 0.2),
-                    sidebar: Color(red: 0.98, green: 0.94, blue: 0.88)
+                    background: Color(red: 0.02, green: 0.02, blue: 0.05), // Absolute Black
+                    text: Color(red: 0.0, green: 1.0, blue: 0.4), // Transmet Green
+                    accent: Color(red: 1.0, green: 0.0, blue: 0.3), // Glitch Red
+                    sidebar: .black,
+                    editorPaper: Color(red: 0.05, green: 0.05, blue: 0.08)
                 )
             case .ocean:
                 return ThemeColors(
-                    background: Color(red: 0.94, green: 0.97, blue: 0.98),
-                    text: Color(red: 0.2, green: 0.3, blue: 0.4),
-                    accent: Color(red: 0.2, green: 0.5, blue: 0.7),
-                    sidebar: Color(red: 0.92, green: 0.95, blue: 0.96)
+                    background: Color(red: 0.02, green: 0.05, blue: 0.15), // Deep Matte Navy
+                    text: Color(red: 0.7, green: 0.9, blue: 1.0),
+                    accent: Color(red: 0.0, green: 0.9, blue: 1.0), // Cyan
+                    sidebar: Color(red: 0.01, green: 0.03, blue: 0.1),
+                    editorPaper: Color(red: 0.05, green: 0.08, blue: 0.2)
                 )
-            case .gonzo:
+            case .mystery:
                 return ThemeColors(
-                    background: Color(white: 0.1),
-                    text: Color(white: 0.9),
-                    accent: Color(red: 0.8, green: 0.1, blue: 0.1),
-                    sidebar: Color(white: 0.05)
+                    background: Color(white: 0.03),
+                    text: Color(white: 0.5),
+                    accent: Color(white: 0.2),
+                    sidebar: .black,
+                    editorPaper: Color(white: 0.06)
                 )
             }
         }
 
-        var isDark: Bool {
+        var description: String {
             switch self {
-            case .mystery, .scifi, .gonzo: return true
-            default: return false
+            case .meridian: return "The baseline. Matte cream and slate."
+            case .focused: return "Clinical clarity. Ice blue and cobalt."
+            case .calm: return "Neutral static. Soft greys for pure drafting."
+            case .creative: return "Heat. High-saturation orange for momentum."
+            case .paper: return "Old world. Newsprint and heavy ink."
+            case .gonzo: return "The Spider Jerusalem. Carbon and blood."
+            case .desert: return "Fear and Loathing. Vegas yellow on deep mud."
+            case .theCity: return "Information filth. Neon green on absolute black."
+            case .ocean: return "Deep thought. Abyssal navy and cyan."
+            case .mystery: return "Low visibility. Minimalist noir."
             }
         }
     }
-
-    // MARK: - Theme Colors
 
     struct ThemeColors {
         let background: Color
         let text: Color
         let accent: Color
         let sidebar: Color
+        let editorPaper: Color
 
-        var selectionColor: Color { accent.opacity(0.3) }
+        var selectionColor: Color { accent.opacity(0.2) }
         var placeholderColor: Color { text.opacity(0.3) }
         var dividerColor: Color { text.opacity(0.1) }
     }
 
-    // MARK: - Application
-
     func applyTheme(_ theme: WritingTheme) {
         currentTheme = theme
         UserDefaults.standard.set(theme.rawValue, forKey: "selectedTheme")
-        Logger.info("Theme changed to: \(theme.rawValue)", category: .ui)
     }
-
-    // MARK: - Recommendations
 
     static func recommendTheme(for genre: String, at date: Date) -> WritingTheme {
         let g = genre.lowercased()
-        if g.contains("romance") { return .romantic }
-        if g.contains("mystery") || g.contains("thriller") || g.contains("horror") { return .mystery }
-        if g.contains("sci-fi") || g.contains("science") || g.contains("future") { return .scifi }
-        if g.contains("fantasy") || g.contains("creative") { return .creative }
-        if g.contains("academic") || g.contains("non-fiction") || g.contains("technical") { return .focused }
-        if g.contains("history") || g.contains("classic") || g.contains("period") { return .vintage }
-        if g.contains("nature") || g.contains("poetry") { return .nature }
-        
-        // Fallback to time of day
-        let hour = Calendar.current.component(.hour, from: date)
-        switch hour {
-        case 6...9: return .energetic
-        case 10...14: return .focused
-        case 15...18: return .creative
-        case 19...21: return .calm
-        default: return .mystery
-        }
+        if g.contains("gonzo") || g.contains("aggressive") { return .gonzo }
+        if g.contains("thriller") || g.contains("horror") { return .mystery }
+        if g.contains("sci-fi") || g.contains("future") || g.contains("cyber") { return .theCity }
+        return .meridian
     }
-
-    func recommendTheme(for writingType: WritingType) -> WritingTheme {
-        switch writingType {
-        case .fiction: return .creative
-        case .nonFiction: return .focused
-        case .romance: return .romantic
-        case .mystery: return .mystery
-        case .sciFi: return .scifi
-        case .memoir: return .warm
-        case .academic: return .minimalist
-        case .poetry: return .nature
-        }
-    }
-
-    func themeForTimeOfDay() -> WritingTheme {
-        let hour = Calendar.current.component(.hour, from: Date())
-        switch hour {
-        case 6...9: return .energetic
-        case 10...14: return .focused
-        case 15...18: return .creative
-        case 19...21: return .calm
-        default: return .mystery
-        }
-    }
-}
-
-// MARK: - Writing Types
-
-enum WritingType: String, CaseIterable, Identifiable {
-    case fiction = "Fiction"
-    case nonFiction = "Non-Fiction"
-    case romance = "Romance"
-    case mystery = "Mystery/Thriller"
-    case sciFi = "Science Fiction"
-    case memoir = "Memoir/Biography"
-    case academic = "Academic/Technical"
-    case poetry = "Poetry/Creative"
-
-    var id: String { rawValue }
-
-    var description: String {
-        switch self {
-        case .fiction: return "Novels, short stories, creative narratives"
-        case .nonFiction: return "How-to, business, educational content"
-        case .romance: return "Love stories, emotional narratives"
-        case .mystery: return "Suspense, crime, psychological thrillers"
-        case .sciFi: return "Futuristic, technological, speculative fiction"
-        case .memoir: return "Personal stories, biographies, life experiences"
-        case .academic: return "Research, technical documentation, textbooks"
-        case .poetry: return "Verse, creative expression, artistic writing"
-        }
-    }
-}
-
-// MARK: - Notification
-
-extension Notification.Name {
-    static let themeDidChange = Notification.Name("themeDidChange")
 }

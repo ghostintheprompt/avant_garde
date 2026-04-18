@@ -5,75 +5,81 @@ struct ContentView: View {
     @EnvironmentObject var viewModel: DocumentViewModel
     @EnvironmentObject var themeManager: ColorThemeManager
 
-    @Environment(\.horizontalSizeClass) private var sizeClass
+    @State private var columnVisibility = NavigationSplitViewVisibility.all
+    @State private var isShowingOnboarding = !UserDefaults.standard.bool(forKey: "hasCompletedOnboarding")
+    @State private var writeError: String?
 
-    @State private var showLibrary = false
-    @AppStorage("onboardingComplete") private var onboardingComplete = false
-    // iPad: sidebar starts visible; iPhone: collapses to stack
-    @State private var columnVisibility: NavigationSplitViewVisibility = .automatic
+    private var colors: ColorThemeManager.ThemeColors {
+        themeManager.currentTheme.colors
+    }
 
     var body: some View {
         NavigationSplitView(columnVisibility: $columnVisibility) {
             ChapterListView()
+                .navigationSplitViewColumnWidth(min: 220, ideal: 260, max: 350)
+                .background(colors.sidebar)
         } detail: {
             ChapterEditorView()
+                .background(colors.background)
         }
-        .navigationSplitViewStyle(.balanced)
-        // Status bar at bottom of detail
-        .safeAreaInset(edge: .bottom) {
-            StatusBar()
+        .navigationTitle(viewModel.document.metadata.title.isEmpty ? "Avant Garde" : viewModel.document.metadata.title)
+        .toolbar {
+            ToolbarItemGroup(placement: .navigation) {
+                Button {
+                    viewModel.isShowingSettings = true
+                } label: {
+                    Image(systemName: "slider.horizontal.3")
+                }
+                .help("Book Settings")
+
+                Button {
+                    viewModel.isShowingThemePicker = true
+                } label: {
+                    Image(systemName: "paintbrush")
+                }
+                .help("Change Theme")
+            }
+
+            ToolbarItemGroup(placement: .primaryAction) {
+                Button {
+                    viewModel.showValidationSheet = true
+                } label: {
+                    Image(systemName: "checkmark.seal")
+                }
+                .help("Validate Manuscript")
+
+                Button {
+                    Task { await viewModel.exportKDP() }
+                } label: {
+                    Label("Export", systemImage: "square.and.arrow.up")
+                }
+                .help("Export for KDP")
+            }
         }
-        // Themed background
-        .background(themeManager.currentTheme.colors.background)
-        // ---- Sheets ----
-        .sheet(isPresented: $showLibrary) {
-            DocumentLibraryView()
-                .environmentObject(viewModel)
-        }
-        .sheet(isPresented: .init(
-            get: { !onboardingComplete },
-            set: { if !$0 { onboardingComplete = true } }
-        )) {
-            OnboardingView(isPresented: .init(
-                get: { !onboardingComplete },
-                set: { if !$0 { onboardingComplete = true } }
-            ))
+        // Custom Branding Overlays
+        .sheet(isPresented: $viewModel.isShowingThemePicker) {
+            ThemePickerView()
+                .frame(width: 600, height: 500)
         }
         .sheet(isPresented: $viewModel.isShowingSettings) {
             BookSettingsView(initialMetadata: viewModel.document.metadata)
-                .environmentObject(viewModel)
-        }
-        .sheet(isPresented: $viewModel.isShowingThemePicker) {
-            ThemePickerView()
-                .environmentObject(themeManager)
+                .frame(width: 500, height: 600)
         }
         .sheet(isPresented: $viewModel.isShowingTTSPlayer) {
             TTSPlayerView()
-                .environmentObject(viewModel)
+                .frame(width: 400, height: 500)
         }
-        .sheet(isPresented: $viewModel.showValidationSheet) {
-            if let report = viewModel.validationReport {
-                ValidationResultsView(report: report) {
-                    viewModel.isShowingSettings = true
+        .sheet(isPresented: $isShowingOnboarding) {
+            OnboardingView(isPresented: $isShowingOnboarding)
+                .onDisappear {
+                    UserDefaults.standard.set(true, forKey: "hasCompletedOnboarding")
                 }
-            }
         }
         .sheet(isPresented: $viewModel.showExportSheet) {
             if let exported = viewModel.exportedData {
-                ExportShareView(file: exported)
+                ExportShareView(exportedFile: exported)
+                    .frame(width: 400, height: 300)
             }
-        }
-        // ---- Alerts ----
-        .alert("Validation Issues", isPresented: $viewModel.showExportValidationAlert) {
-            Button("Export Anyway", role: .destructive) {
-                Task { await viewModel.confirmExportDespiteErrors() }
-            }
-            Button("Cancel", role: .cancel) {}
-        } message: {
-            let errors = viewModel.exportValidationErrors
-            Text(errors.count == 1
-                ? errors[0]
-                : "\(errors.count) errors must be fixed:\n" + errors.prefix(3).joined(separator: "\n"))
         }
         .alert("Export Error", isPresented: Binding(
             get: { viewModel.exportError != nil },
@@ -81,182 +87,55 @@ struct ContentView: View {
         )) {
             Button("OK") { viewModel.exportError = nil }
         } message: {
-            Text(viewModel.exportError ?? "")
+            Text(viewModel.exportError ?? "An unknown error occurred during export.")
         }
-        .alert("Playback Error", isPresented: Binding(
-            get: { viewModel.ttsError != nil },
-            set: { if !$0 { viewModel.ttsError = nil } }
-        )) {
-            Button("OK") { viewModel.ttsError = nil }
-        } message: {
-            Text(viewModel.ttsError ?? "")
-        }
-        .toolbar {
-            // Leading: document actions
-            ToolbarItemGroup(placement: .navigation) {
-                Menu {
-                    Button("New Book", systemImage: "doc.badge.plus") {
-                        viewModel.newDocument()
-                    }
-                    Button("Open...", systemImage: "folder") {
-                        showLibrary = true
-                    }
-                    Divider()
-                    Button("Book Settings", systemImage: "gear") {
-                        viewModel.isShowingSettings = true
-                    }
-                } label: {
-                    Image(systemName: "doc.text")
-                }
-            }
-
-            // Trailing: export + theme + TTS
-            ToolbarItemGroup(placement: .navigation) {
-                Button {
-                    viewModel.isShowingThemePicker = true
-                } label: {
-                    Image(systemName: "paintpalette")
-                }
-                .help("Change Theme")
-
-                Menu {
-                    Button("Validate for KDP", systemImage: "checkmark.seal") {
-                        viewModel.validateKDP()
-                    }
-                    Button("Validate for Google Play", systemImage: "checkmark.seal") {
-                        viewModel.validateGoogle()
-                    }
-                    Divider()
-                    Button("Export for KDP", systemImage: "arrow.up.doc") {
-                        Task { await viewModel.exportKDP() }
-                    }
-                    Button("Export for Google Play", systemImage: "arrow.up.doc.fill") {
-                        Task { await viewModel.exportGoogle() }
-                    }
-                } label: {
-                    if viewModel.isExporting {
-                        ProgressView()
-                    } else {
-                        Image(systemName: "square.and.arrow.up")
-                    }
-                }
-                .help("Export")
-                .disabled(viewModel.isExporting)
-
-                Button {
-                    viewModel.isShowingTTSPlayer = true
-                } label: {
-                    Image(systemName: viewModel.ttsIsPlaying ? "waveform" : "headphones")
-                        .foregroundStyle(viewModel.ttsIsPlaying ? Color.accentColor : Color.primary)
-                }
-                .help("Listen")
-            }
-        }
-    }
-}
-
-// MARK: - Status Bar
-
-private struct StatusBar: View {
-
-    @EnvironmentObject var viewModel: DocumentViewModel
-    @EnvironmentObject var themeManager: ColorThemeManager
-
-    var body: some View {
-        HStack(spacing: 16) {
-            Label("\(viewModel.wordCount) words", systemImage: "text.word.spacing")
-            Label("\(viewModel.estimatedReadingMinutes) min read", systemImage: "clock")
-
-            Spacer()
-
-            if viewModel.hasUnsavedChanges {
-                Label("Unsaved", systemImage: "pencil.circle")
-                    .foregroundStyle(.orange)
-            } else {
-                Label("Saved", systemImage: "checkmark.circle")
-                    .foregroundStyle(.secondary)
-            }
-        }
-        .font(.caption)
-        .foregroundStyle(.secondary)
-        .padding(.horizontal, 16)
-        .padding(.vertical, 8)
-        .background(.ultraThinMaterial)
     }
 }
 
 // MARK: - Export Share View
 
-struct ExportShareView: View {
-
+private struct ExportShareView: View {
+    let exportedFile: ExportedFile
     @Environment(\.dismiss) var dismiss
-    let file: ExportedFile
-
-    @State private var tempURL: URL?
-    @State private var writeError: String?
 
     var body: some View {
-        NavigationStack {
-            Group {
-                if let url = tempURL {
-                    VStack(spacing: 24) {
-                        Image(systemName: "doc.badge.checkmark")
-                            .font(.system(size: 56))
-                            .foregroundStyle(.green)
-
-                        Text(file.suggestedFileName)
-                            .font(.headline)
-
-                        ShareLink(
-                            item: url,
-                            subject: Text(file.suggestedFileName),
-                            message: Text("Exported from Avant Garde"),
-                            preview: SharePreview(file.suggestedFileName, image: Image(systemName: "doc.text"))
-                        ) {
-                            Label("Share File", systemImage: "square.and.arrow.up")
-                                .frame(maxWidth: 280)
-                        }
-                        .buttonStyle(.borderedProminent)
-                        .controlSize(.large)
-                    }
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                } else if let error = writeError {
-                    VStack(spacing: 16) {
-                        Image(systemName: "exclamationmark.triangle")
-                            .font(.system(size: 48))
-                            .foregroundStyle(.red)
-                        Text("Export Failed")
-                            .font(.headline)
-                        Text(error)
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
-                            .multilineTextAlignment(.center)
-                    }
-                    .padding()
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                } else {
-                    ProgressView("Preparing export...")
-                        .onAppear { writeTempFile() }
-                }
+        VStack(spacing: 20) {
+            Image(systemName: "doc.badge.arrow.up")
+                .font(.system(size: 48))
+                .foregroundStyle(.tint)
+            
+            VStack(spacing: 8) {
+                Text("Ready to Ship")
+                    .font(.headline)
+                Text("Your manuscript has been professionally formatted and is ready for distribution.")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
             }
-            .navigationTitle("Export Ready")
-            .toolbar {
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Done") { dismiss() }
-                }
+            
+            Button("Save \(exportedFile.suggestedFileName)...") {
+                saveFile()
             }
+            .buttonStyle(.borderedProminent)
+            .controlSize(.large)
+            
+            Button("Done") { dismiss() }
+                .buttonStyle(.plain)
+                .foregroundStyle(.secondary)
         }
+        .padding(40)
     }
 
-    private func writeTempFile() {
-        let tmp = FileManager.default.temporaryDirectory
-            .appendingPathComponent(file.suggestedFileName)
-        do {
-            try file.data.write(to: tmp, options: .atomic)
-            tempURL = tmp
-        } catch {
-            Logger.error("Failed to write temp export file", error: error, category: .general)
-            writeError = error.localizedDescription
+    private func saveFile() {
+        let savePanel = NSSavePanel()
+        savePanel.allowedContentTypes = [exportedFile.contentType == "text/html" ? .html : .epub]
+        savePanel.nameFieldStringValue = exportedFile.suggestedFileName
+        
+        if savePanel.runModal() == .OK {
+            if let url = savePanel.url {
+                try? exportedFile.data.write(to: url)
+                dismiss()
+            }
         }
     }
 }

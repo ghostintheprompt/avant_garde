@@ -44,6 +44,8 @@ class UpdateChecker: ObservableObject {
                        let htmlUrl = json["html_url"] as? String {
                         
                         let cleanTagName = tagName.replacingOccurrences(of: "v", with: "")
+                        
+                        // Precise version check: only update if remote > current
                         let comparison = self?.currentVersion.compare(cleanTagName, options: .numeric)
                         
                         if comparison == .orderedAscending {
@@ -51,8 +53,11 @@ class UpdateChecker: ObservableObject {
                             self?.updateURL = URL(string: htmlUrl)
                             self?.updateAvailable = true
                             self?.showUpdateAlert(version: tagName, url: htmlUrl)
-                        } else if !isAutoCheck {
-                            self?.showUpToDateAlert()
+                        } else {
+                            self?.updateAvailable = false
+                            if !isAutoCheck {
+                                self?.showUpToDateAlert()
+                            }
                         }
                     }
                 } catch {
