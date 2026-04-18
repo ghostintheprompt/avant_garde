@@ -67,6 +67,7 @@ private struct EditorContent: View {
                 .focused($bodyFocused)
                 .onChange(of: bodyText) { newValue in
                     viewModel.updateChapterContent(newValue, for: chapterID)
+                    playTypewriterSound()
                 }
         }
         .background(colors.background)
@@ -104,6 +105,13 @@ private struct EditorContent: View {
     }
 
     // MARK: - Helpers
+
+    private func playTypewriterSound() {
+        guard themeManager.currentTheme == .gonzo else { return }
+        #if os(macOS)
+        NSSound(named: "Tink")?.play()
+        #endif
+    }
 
     private var wordCountLabel: String {
         let words = bodyText

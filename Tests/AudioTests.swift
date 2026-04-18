@@ -1,56 +1,79 @@
 import XCTest
-@testable import ebook_converter_macos
+import AVFoundation
+@testable import AvantGarde
 
 class AudioTests: XCTestCase {
 
-    var textToSpeech: TextToSpeech!
+    var mockTTS: MockTextToSpeech!
     var audioController: AudioController!
+    var mockDelegate: MockAudioControllerDelegate!
 
     override func setUp() {
         super.setUp()
-        textToSpeech = TextToSpeech()
-        audioController = AudioController()
+        mockTTS = MockTextToSpeech()
+        audioController = AudioController(textToSpeech: mockTTS)
+        mockDelegate = MockAudioControllerDelegate()
+        audioController.delegate = mockDelegate
     }
 
     override func tearDown() {
-        textToSpeech = nil
+        mockTTS = nil
         audioController = nil
+        mockDelegate = nil
         super.tearDown()
     }
 
     func testTextToSpeechSpeak() {
-        let expectation = self.expectation(description: "Text to speech should speak the text")
+        mockTTS.speak(text: "Hello, this is a test.")
+        XCTAssertTrue(mockTTS.speakCalled)
+        XCTAssertEqual(mockTTS.lastSpokenText, "Hello, this is a test.")
+        XCTAssertTrue(mockTTS.isSpeaking)
         
-        textToSpeech.speak("Hello, this is a test.") {
-            expectation.fulfill()
-        }
-        
-        waitForExpectations(timeout: 5, handler: nil)
+        mockTTS.stopSpeaking()
+        XCTAssertTrue(mockTTS.stopCalled)
+        XCTAssertFalse(mockTTS.isSpeaking)
     }
 
-    func testTextToSpeechStopSpeaking() {
-        textToSpeech.speak("This will be stopped.")
-        textToSpeech.stopSpeaking()
+    func testTextToSpeechPauseResume() {
+        mockTTS.speak(text: "Pause test")
+        XCTAssertTrue(mockTTS.isSpeaking)
         
-        // Assuming there's a way to check if it's stopped, this is a placeholder
-        XCTAssertFalse(textToSpeech.isSpeaking)
+        mockTTS.pauseSpeaking()
+        XCTAssertTrue(mockTTS.pauseCalled)
+        XCTAssertTrue(mockTTS.isPaused)
+        
+        mockTTS.continueSpeaking()
+        XCTAssertTrue(mockTTS.continueCalled)
+        XCTAssertFalse(mockTTS.isPaused)
     }
 
-    func testAudioControllerPlayAudio() {
-        let expectation = self.expectation(description: "Audio should play")
+    func testAudioControllerReadText() {
+        audioController.readTextAloud("Hello from AudioController")
+        XCTAssertTrue(mockTTS.speakCalled)
+        XCTAssertEqual(mockTTS.lastSpokenText, "Hello from AudioController")
+        XCTAssertTrue(audioController.isReadingText)
         
-        audioController.playAudio("testAudio.mp3") {
-            expectation.fulfill()
-        }
-        
-        waitForExpectations(timeout: 5, handler: nil)
+        audioController.stopTextToSpeech()
+        XCTAssertTrue(mockTTS.stopCalled)
+        XCTAssertFalse(audioController.isReadingText)
     }
 
-    func testAudioControllerStopAudio() {
-        audioController.playAudio("testAudio.mp3")
-        audioController.stopAudio()
+    func testAudioControllerReadDocument() {
+        let document = TestDataFactory.createTestDocument()
+        audioController.readDocument(document)
         
-        // Assuming there's a way to check if audio is stopped, this is a placeholder
-        XCTAssertFalse(audioController.isPlaying)
+        XCTAssertTrue(mockTTS.speakCalled)
+        XCTAssertTrue(audioController.isReadingText)
+        XCTAssertEqual(audioController.currentChapterIndex, 0)
+        
+        // Test navigation
+        audioController.readNextChapter()
+        XCTAssertEqual(audioController.currentChapterIndex, 1)
+        
+        audioController.readPreviousChapter()
+        XCTAssertEqual(audioController.currentChapterIndex, 0)
+        
+        audioController.stopTextToSpeech()
+        XCTAssertFalse(audioController.isReadingText)
     }
 }

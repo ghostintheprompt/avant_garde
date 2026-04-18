@@ -34,6 +34,16 @@ struct BookSettingsView: View {
                     }
                 }
 
+                Section("Layout & Typography") {
+                    Picker("Style Preset", selection: $metadata.preset) {
+                        ForEach(StylePreset.allCases, id: \.self) { preset in
+                            Text(preset.rawValue).tag(preset)
+                        }
+                    }
+                    Toggle("Enable Drop Caps", isOn: $metadata.enableDropCaps)
+                    Toggle("Enable Hyphenation", isOn: $metadata.enableHyphenation)
+                }
+
                 Section("Publishing Details") {
                     LabeledContent("ISBN") {
                         TextField("978-...", text: $metadata.isbn)

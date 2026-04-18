@@ -1,7 +1,7 @@
 import XCTest
 import Foundation
 import AVFoundation
-@testable import ebook_converter_macos
+@testable import AvantGarde
 
 // MARK: - Mock Text-to-Speech
 

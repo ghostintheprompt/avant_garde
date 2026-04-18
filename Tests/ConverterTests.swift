@@ -1,5 +1,5 @@
 import XCTest
-@testable import ebook_converter_macos
+@testable import AvantGarde
 
 class ConverterTests: XCTestCase {
 
@@ -93,6 +93,26 @@ class ConverterTests: XCTestCase {
 
         XCTAssertFalse(errors.isEmpty, "Document with large chapter should have warnings")
         assertContainsError(errors, containing: "too large")
+    }
+
+    func testKDPProfessionalLayout() async throws {
+        let document = TestDataFactory.createTestDocument()
+        document.metadata.preset = .meridian
+        document.metadata.enableDropCaps = true
+        
+        // Add specialty content
+        document.chapters[0].content = "Once upon a time. [LETTER]This is a letter. A: Hello. B: Hi there. *** New scene."
+        
+        let data = try await kdpConverter.convertToKDP(document: document)
+        let html = String(data: data, encoding: .utf8)!
+        
+        XCTAssertTrue(html.contains("chapter-container"), "Should have chapter sink container")
+        XCTAssertTrue(html.contains("chapter-label"), "Should have chapter label")
+        XCTAssertTrue(html.contains("drop-cap"), "Should have drop cap")
+        XCTAssertTrue(html.contains("small-caps"), "Should have small caps bridge")
+        XCTAssertTrue(html.contains("letter"), "Should have letter module")
+        XCTAssertTrue(html.contains("chat-bubble"), "Should have chat bubble module")
+        XCTAssertTrue(html.contains("scene-break"), "Should have scene break ornament")
     }
 
     // MARK: - Google Converter Tests

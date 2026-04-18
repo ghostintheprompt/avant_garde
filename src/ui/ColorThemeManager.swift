@@ -23,6 +23,7 @@ class ColorThemeManager: ObservableObject {
         case minimalist = "Pure Focus"
         case warm = "Cozy Fireplace"
         case ocean = "Ocean Depths"
+        case gonzo = "Gonzo Journalism"
 
         var id: String { rawValue }
 
@@ -40,6 +41,7 @@ class ColorThemeManager: ObservableObject {
             case .minimalist: return "High contrast for distraction-free focus"
             case .warm: return "Golden hues create comfortable, inviting atmosphere"
             case .ocean: return "Deep blue-greens for contemplative, flowing prose"
+            case .gonzo: return "High-contrast monochrome with crimson accents for raw, aggressive focus"
             }
         }
 
@@ -57,6 +59,7 @@ class ColorThemeManager: ObservableObject {
             case .minimalist: return "Eliminates distractions, pure word focus"
             case .warm: return "Creates comfort zone, reduces writing anxiety"
             case .ocean: return "Promotes deep thinking, philosophical writing"
+            case .gonzo: return "Maximizes raw creative output, aggressive clarity"
             }
         }
 
@@ -146,12 +149,19 @@ class ColorThemeManager: ObservableObject {
                     accent: Color(red: 0.2, green: 0.5, blue: 0.7),
                     sidebar: Color(red: 0.92, green: 0.95, blue: 0.96)
                 )
+            case .gonzo:
+                return ThemeColors(
+                    background: Color(white: 0.1),
+                    text: Color(white: 0.9),
+                    accent: Color(red: 0.8, green: 0.1, blue: 0.1),
+                    sidebar: Color(white: 0.05)
+                )
             }
         }
 
         var isDark: Bool {
             switch self {
-            case .mystery, .scifi: return true
+            case .mystery, .scifi, .gonzo: return true
             default: return false
             }
         }

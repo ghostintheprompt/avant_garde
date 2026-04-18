@@ -38,6 +38,11 @@ struct BookMetadata: Codable {
     var rights: String = "All rights reserved"
     var subject: String = ""
 
+    // Layout Engine Integration
+    var preset: StylePreset = .meridian
+    var enableDropCaps: Bool = true
+    var enableHyphenation: Bool = true
+
     var publicationDate: String {
         return BookMetadata.dateFormatter.string(from: publishDate)
     }
@@ -49,15 +54,19 @@ struct BookMetadata: Codable {
     }()
 }
 
+enum StylePreset: String, Codable, CaseIterable {
+    case meridian = "Meridian"
+    case serein = "Serein"
+    case oxford = "Oxford"
+    case vogue = "Vogue"
+    case legible = "Legible"
+}
+
 struct FormattingRules: Codable {
     var fontSize: CGFloat = 12
     var fontName: String = "Times New Roman"
     var lineSpacing: CGFloat = 1.5
-    var paragraphSpacing: CGFloat = 6
-    var marginTop: CGFloat = 72
-    var marginBottom: CGFloat = 72
-    var marginLeft: CGFloat = 72
-    var marginRight: CGFloat = 72
+    var paragraphSpacing: CGFloat = 0 
     var chapterStartsNewPage: Bool = true
 }
 

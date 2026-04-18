@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="Resources/Assets.xcassets/AppIcon.appiconset/icon_1024x1024.png" width="128" height="128" alt="Avant Garde Icon">
+  <img src="Resources/Assets.xcassets/AppIcon.appiconset/icon_1024x1024.png" width="256" height="256" alt="Avant Garde Icon">
 </p>
 
 # Avant Garde
@@ -18,7 +18,8 @@ Avant Garde is a professional authoring environment built for authors who ship. 
 
 | Feature | Description | Benefit |
 |---|---|---|
-| **Color Psychology** | 12 research-backed themes (Focused, Creative, Zen, etc.) | Increases focus by 23%, boosts creativity by 31% |
+| **Color Psychology** | 13 research-backed themes (Gonzo, Focused, Zen, etc.) | Increases focus by 23%, boosts creativity by 31% |
+| **Gonzo Mode** | High-contrast mechanical typewriter aesthetic | Tactical, raw feedback for aggressive draft sessions |
 | **Voice Preview** | High-quality text-to-speech for manuscript review | Catch pacing issues and dialogue friction by listening |
 | **KDP Export** | One-click Amazon-ready HTML & Google Play EPUB | Validates formatting before delivery — no submission surprises |
 | **Chapter Manager** | Drag-and-drop reorganization | Total control over manuscript structure unlike locked editors |
