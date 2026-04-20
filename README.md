@@ -1,10 +1,7 @@
-<p align="center">
-  <img src="Resources/Assets.xcassets/AppIcon.appiconset/icon_1024x1024.png" width="256" height="256" alt="Avant Garde Icon">
-</p>
+<img src="Resources/Assets.xcassets/AppIcon.appiconset/icon_1024x1024.png" width="200">
 
 # Avant Garde
-
-### macOS writing tool. Research-backed color psychology. Professional layout engine. Built for authors who ship.
+macOS writing tool with research-backed color psychology and professional layout engine. — v1.0
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Platform: macOS](https://img.shields.io/badge/Platform-macOS-lightgrey.svg)](BUILD.md)
