@@ -1,4 +1,6 @@
-<img src="Resources/Assets.xcassets/AppIcon.appiconset/icon_1024x1024.png" width="200">
+<p align="center">
+  <img src="Resources/Assets.xcassets/AppIcon.appiconset/icon_1024x1024.png" width="520">
+</p>
 
 # Avant Garde
 macOS writing tool with research-backed color psychology and professional layout engine. — v1.0
